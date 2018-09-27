@@ -1,17 +1,12 @@
-sudo: required
 language: ruby
+cache: bundler
 
-services:
-  - docker
-
-before_install:
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - sudo apt-get update
-  - sudo apt-get -y install docker-ce
+addons:
+  apt:
+    packages:
+      - docker-ce
 
 script:
-  - git clean -xdf
   - docker build -t u6kapps/crawline -f Dockerfile.production .
   - docker-compose -f docker-compose.production.yml up -d
   - docker-compose -f docker-compose.production.yml exec app rails test
@@ -25,3 +20,7 @@ after_success:
     else
       echo skip docker push;
     fi
+
+notifications:
+  slack:
+    secure: HbbAFp3EZjRAgFU/9gjohEf29n2/LEEtMk9QBVjN0OtI6Ft0VGI7fHmyEVhhZIb7lv91HAZC848WGH502+R8kHkWnXbRmF2xaIiGesxktM7dVwIrR/lQ2gIMs+6N6WcNdrVB4JXIWn9hhKitT7HBlSU1AZBguo1WNqlLJjdFNTVqIVvpxq4OPN/MZtejvZe7Da3kmE04NE09x9dMoaj4YmKiwNpEf9h+QVxZgVnoyCi3Y1JmpuQbad5Zxjnru2+BzgBXgfQKG8p1eQcNNtpdkJGif+7H+QxDjMXAgU666hJYwQWIdLUKfoeL6AxZ9mI/jx0zXQikMrZhjuJRxix+QLnns8yZENFQ0XVkbiSj9yzJY72IEomARklUC6p/Tvaui3uYnuXSQVCOt1bd4CTq5pp0lhOOlVFhLKW4kkQju8xRGQm91wHi86BixLsncc1sruWMcAByJRBGRCYaOmvP+tVJZx8oXFMXPZDY+tc3nS9kzGZDh7xvrTBQDTYYx/Jgg37NWeNjWd9A0pu6s5EPbpiAV2M4aaaGNue7TkcuPTFiLklyuJXhTfJJ1pw3e3KHCoI1/I4udyQYuvBZhke7D175npi0AWC6xV5oq6jtScNcR5sXhSPg2tp+TXfn+cJYC8jIP0sZIS4JGf3YPAP5edsBB9PL/XXVcq2PJXzpTk0=
