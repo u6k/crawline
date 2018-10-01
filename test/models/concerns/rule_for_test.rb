@@ -17,7 +17,7 @@ end
 class StockPricePageTestRule < BaseRule
 
   def match_request?(request)
-    (request[:method] == "POST" && request[:url] == "https://kabuoji3.com/stock/file.php" && /[0-9]+/.match(request[:parameters][:code]) != nil && /[0-9]+/.match(request[:parameters][:year]) != nil)
+    (request[:method] == "POST" && request[:url] == "https://kabuoji3.com/stock/file.php" && /[0-9]+/.match(request[:request_parameters][:code]) != nil && /[0-9]+/.match(request[:request_parameters][:year]) != nil)
   end
 
 end
