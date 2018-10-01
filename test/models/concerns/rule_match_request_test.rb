@@ -39,8 +39,8 @@ class RuleMatchRequestTest < ActiveSupport::TestCase
       url: "https://kabuoji3.com/stock/file.php",
       method: "POST",
       parameters: {
-        code: 1234,
-        year: 2018
+        code: "1234",
+        year: "2018"
       }
     }
 
