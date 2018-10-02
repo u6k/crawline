@@ -5,5 +5,9 @@ class BaseRule
     raise "Not implemented."
   end
 
+  def want_redownload?(latest_content)
+    raise "Not implemented."
+  end
+
 end
 

@@ -53,12 +53,12 @@ class RuleWantRedownloadTest < ActiveSupport::TestCase
 
     # Custom rule: One day has passed since the last download, so please re-download
     Timecop.freeze(Time.zone.local(2018, 10, 2, 0, 0, 0)) do
-      assert_not stock_price_page_rule.want_redownload(latest_content)
+      assert_not stock_price_page_rule.want_redownload?(latest_content)
     end
 
     # Custom rule: One day has passed since the last download, so please re-download
     Timecop.freeze(Time.zone.local(2018, 10, 3, 0, 0, 0)) do
-      assert stock_price_page_rule.want_redownload(latest_content)
+      assert stock_price_page_rule.want_redownload?(latest_content)
     end
   end
 
