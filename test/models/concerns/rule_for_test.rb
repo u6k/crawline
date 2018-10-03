@@ -29,7 +29,13 @@ class StockPricePageTestRule < BaseRule
   end
 
   def want_redownload?(latest_content)
-    ((Time.zone.now - latest_content[:downloaded_timestamp]) > 86400) # 86400sec = 1day
+    if ((Time.zone.now - latest_content[:downloaded_timestamp]) <= 86400) # 86400sec = 1day
+      return false
+    end
+
+    year = latest_content[:request_parameters][:year].to_i
+
+    ((Time.zone.now.year - year) < 2)
   end
 
 end
