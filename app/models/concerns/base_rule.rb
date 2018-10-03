@@ -9,5 +9,9 @@ class BaseRule
     raise "Not implemented."
   end
 
+  def parse(downloaded_content)
+    raise "Not implemented."
+  end
+
 end
 
