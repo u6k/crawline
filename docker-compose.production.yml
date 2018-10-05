@@ -13,6 +13,7 @@ services:
       - "DB_DATABASE=db"
     depends_on:
       - "db"
+      - "s3"
     ports:
       - "3000:3000"
   db:
@@ -23,7 +24,18 @@ services:
       - "POSTGRES_DB=db"
     volumes:
       - "db:/var/lib/postgresql/data"
+  s3:
+    image: minio/minio
+    volumes:
+      - "s3:/export"
+    environment:
+      - "MINIO_ACCESS_KEY=s3-access-key"
+      - "MINIO_SECRET_KEY=s3-secret-key"
+      - "MINIO_REGION=my-region"
+    command: server /export
 
 volumes:
   db:
+    driver: local
+  s3:
     driver: local
