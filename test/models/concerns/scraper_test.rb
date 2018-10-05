@@ -70,5 +70,21 @@ class ScraperTest < ActiveSupport::TestCase
     assert_nil rule
   end
 
+  test "get cache: not found" do
+    flunk
+  end
+
+  test "get cache: get request" do
+    flunk
+  end
+
+  test "get cache: post request" do
+    flunk
+  end
+
+  test "get cache: binary content" do
+    flunk
+  end
+
 end
 
