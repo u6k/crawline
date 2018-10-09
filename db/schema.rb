@@ -38,7 +38,7 @@ ActiveRecord::Schema.define(version: 2018_10_06_185351) do
 
   create_table "cache_contents", force: :cascade do |t|
     t.string "cache_hash"
-    t.datetime "downloaded_timestamp"
+    t.integer "content_version"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
