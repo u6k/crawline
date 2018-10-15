@@ -9,6 +9,7 @@ addons:
 script:
   - docker build -t u6kapps/crawline -f Dockerfile.production .
   - docker-compose -f docker-compose.production.yml up -d
+  - docker-compose -f docker-compose.production.yml exec s3 mkdir -p /export/test.crawline/
   - docker-compose -f docker-compose.production.yml exec app rails test
   - docker-compose -f docker-compose.production.yml down -v
 
