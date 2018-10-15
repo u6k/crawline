@@ -70,5 +70,33 @@ class ScraperTest < ActiveSupport::TestCase
     assert_nil rule
   end
 
+  test "download: get request" do
+    flunk
+  end
+
+  test "download: post request" do
+    flunk
+  end
+
+  test "download: redirect" do
+    flunk
+  end
+
+  test "download: not modified" do
+    flunk
+  end
+
+  test "download: not found" do
+    flunk
+  end
+
+  test "download: internal server error" do
+    flunk
+  end
+
+  test "download: timeout" do
+    flunk
+  end
+
 end
 
