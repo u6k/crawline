@@ -193,19 +193,29 @@ class CacheContentTest < ActiveSupport::TestCase
     assert_equal "1917509773f0d090635b1b513627c6e4774acf4b093934255004e77320ea1270", cache_content.cache_hash
     assert_equal 123, cache_content.content_version
 
-    content_data = nil
+    downloaded_content_meta = nil
+    downloaded_content = nil
     SevenZipRuby::Reader.open(StringIO.new(cache_content.content.download)) do |szr|
-      content_data = szr.extract_data(szr.entries[0])
+      szr.entries.each do |entry|
+        if entry.path.end_with?(".meta")
+          downloaded_content_meta = szr.extract_data(entry)
+        elsif entry.path.end_with?(".bin")
+          downloaded_content = szr.extract_data(entry)
+        end
+      end
     end
-    expected_content_data = {
+    downloaded_content_hash = OpenSSL::Digest::SHA256.hexdigest(downloaded_content)
+
+    expected_content_meta = {
       "request" => request,
       "response" => response,
-      "cached_timestamp" => 123,
-      "content" => "Base64:" + Base64.strict_encode64(content),
-      "content_hash" => "SHA256:" + OpenSSL::Digest::SHA256.hexdigest(content)
+      "cached_timestamp" => 123
     }.to_json
+    expected_content_hash = OpenSSL::Digest::SHA256.hexdigest(content)
 
-    assert_equal expected_content_data, content_data
+    assert_equal expected_content_meta, downloaded_content_meta
+    assert_equal expected_content_hash, downloaded_content_hash
+    # FIXME assert_equal content, downloaded_content
   end
 
   test "save cache: cache_version not setting(default)" do
@@ -300,7 +310,12 @@ class CacheContentTest < ActiveSupport::TestCase
 
     assert_equal "6b44e4173ba3995850ac8d5a251fc7a6a8184925c482bbc6053ab66f99f6d2ef", cache_content.cache_hash
     assert_equal 1539082916, cache_content.content_version
-    assert_equal expected_cache, cache_content.to_cache
+    # FIXME assert_equal expected_cache, cache_content.to_cache
+    cache = cache_content.to_cache
+    assert_equal expected_cache["request"], cache["request"]
+    assert_equal expected_cache["response"], cache["response"]
+    assert_equal expected_cache["cached_timestamp"], cache["cached_timestamp"]
+    assert_equal OpenSSL::Digest::SHA256.hexdigest(expected_cache["content"]), OpenSSL::Digest::SHA256.hexdigest(cache["content"])
   end
 
   test "find cache: post request" do
@@ -352,9 +367,14 @@ class CacheContentTest < ActiveSupport::TestCase
       "content" => File.open("test/fixtures/files/blog_tags.html").read
     }
 
-    assert_equal "409c87b61b9941c0f142f5ca277cb94a7b3dbad54372bfe9847bd54e70b85228", cache_content.cache_hash
+    assert_equal "91714a83e2f23f380964823d2e2bbd5b3fd5218e43ac36abf2602ba531b8b6e0", cache_content.cache_hash
     assert_equal 1539083031, cache_content.content_version
-    assert_equal expected_cache, cache_content.to_cache
+    # FIXME assert_equal expected_cache, cache_content.to_cache
+    cache = cache_content.to_cache
+    assert_equal expected_cache["request"], cache["request"]
+    assert_equal expected_cache["response"], cache["response"]
+    assert_equal expected_cache["cached_timestamp"], cache["cached_timestamp"]
+    assert_equal OpenSSL::Digest::SHA256.hexdigest(expected_cache["content"]), OpenSSL::Digest::SHA256.hexdigest(cache["content"])
   end
 
   test "find cache: binary content" do
@@ -398,7 +418,12 @@ class CacheContentTest < ActiveSupport::TestCase
 
     assert_equal "5a6041fa4c3379560cb0cb4b0cee8f6be3adf3db7396ef8b21a557c8f37e4456", cache_content.cache_hash
     assert_equal 1539082995, cache_content.content_version
-    assert_equal expected_cache, cache_content.to_cache
+    # FIXME assert_equal expected_cache, cache_content.to_cache
+    cache = cache_content.to_cache
+    assert_equal expected_cache["request"], cache["request"]
+    assert_equal expected_cache["response"], cache["response"]
+    assert_equal expected_cache["cached_timestamp"], cache["cached_timestamp"]
+    assert_equal OpenSSL::Digest::SHA256.hexdigest(expected_cache["content"]), OpenSSL::Digest::SHA256.hexdigest(cache["content"])
   end
 
 end
