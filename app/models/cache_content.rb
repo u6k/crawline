@@ -66,7 +66,6 @@ class CacheContent < ApplicationRecord
     content = nil
     SevenZipRuby::Reader.open(StringIO.new(content_data_7z)) do |szr|
       szr.entries.each do |entry|
-        pp entry.path
         if entry.path.end_with?(".meta")
           content_meta = JSON.parse(szr.extract_data(entry))
         elsif entry.path.end_with?(".bin")
