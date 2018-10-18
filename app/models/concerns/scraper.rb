@@ -52,9 +52,13 @@ class Scraper
       end
 
       response
+    elsif res.code == "201" || res.code == "301" || res.code == "302" || res.code == "303"
+      redirect_url = URI::join(url, res["Location"]).to_s
+
+      download_with_get(redirect_url)
     else
       # FIXME
-      Rails.logger.warn "download_with_get: status code not 200 ok: url=#{url}, code=#{res.code}"
+      Rails.logger.warn "download_with_get: invalid status code: url=#{url}, code=#{res.code}"
       nil
     end
   end
@@ -83,9 +87,13 @@ class Scraper
       end
 
       response
+    elsif res.code == "201" || res.code == "301" || res.code == "302" || res.code == "303"
+      redirect_url = URI::join(url, res["Location"]).to_s
+
+      download_with_get(redirect_url)
     else
       # FIXME
-      Rails.logger.warn "download_with_post: status code not 200 ok: url=#{url}, data=#{data}, code=#{res.code}"
+      Rails.logger.warn "download_with_post: invalid status code: url=#{url}, code=#{res.code}"
       nil
     end
   end
