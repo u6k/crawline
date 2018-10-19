@@ -153,6 +153,23 @@ class ScraperDownloadTest < ActiveSupport::TestCase
       }
     )
 
+    # stub not found
+    stub_request(:get, "https://blog.u6k.me/404.html").to_return(
+      status: 404,
+      headers: {
+        "Content-Type" => "text/plain"
+      },
+      body: "Not Found"
+    )
+
+    stub_request(:post, "https://blog.u6k.me/new").with(body: { body: "test" }).to_return(
+      status: 404,
+      headers: {
+        "Content-Type" => "text/plain"
+      },
+      body: "Not Found"
+    )
+
     # build Scraper
     @scraper = Scraper.new
     @scraper.download_interval = 0.001
@@ -597,11 +614,32 @@ class ScraperDownloadTest < ActiveSupport::TestCase
   end
 
   test "download: get not found" do
-    flunk
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/404.html",
+      "method" => "GET"
+    }
+
+    # execute
+    assert_raises(ContentNotFoundError) do
+      @scraper.download(request)
+    end
   end
 
   test "download: post not found" do
-    flunk
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/new",
+      "method" => "POST",
+      "parameters" => {
+        "body": "test"
+      }
+    }
+
+    # execute
+    assert_raises(ContentNotFoundError) do
+      @scraper.download(request)
+    end
   end
 
   test "download: get internal server error" do
