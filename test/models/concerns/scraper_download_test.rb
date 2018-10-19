@@ -170,6 +170,23 @@ class ScraperDownloadTest < ActiveSupport::TestCase
       body: "Not Found"
     )
 
+    # stub internal server error
+    stub_request(:get, "https://blog.u6k.me/500.html").to_return(
+      status: 500,
+      headers: {
+        "Content-Type" => "text/plain"
+      },
+      body: "Error"
+    )
+
+    stub_request(:post, "https://blog.u6k.me/new").with(body: { code: "500" }).to_return(
+      status: 500,
+      headers: {
+        "Content-Type" => "text/plain"
+      },
+      body: "Error"
+    )
+
     # build Scraper
     @scraper = Scraper.new
     @scraper.download_interval = 0.001
@@ -643,11 +660,32 @@ class ScraperDownloadTest < ActiveSupport::TestCase
   end
 
   test "download: get internal server error" do
-    flunk
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/500.html",
+      "method" => "GET"
+    }
+
+    # execute
+    assert_raises(ContentOtherError) do
+      @scraper.download(request)
+    end
   end
 
   test "download: post internal server error" do
-    flunk
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/new",
+      "method" => "POST",
+      "parameters" => {
+        "code": "500"
+      }
+    }
+
+    # execute
+    assert_raises(ContentOtherError) do
+      @scraper.download(request)
+    end
   end
 
   test "download: get timeout" do

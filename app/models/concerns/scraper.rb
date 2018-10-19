@@ -1,5 +1,7 @@
 class ContentNotFoundError < StandardError; end
 
+class ContentOtherError < StandardError; end
+
 class Scraper
   extend ActiveSupport::Concern
 
@@ -78,7 +80,7 @@ class Scraper
     else
       # FIXME
       Rails.logger.warn "download_with_get: invalid status code: url=#{url}, code=#{res.code}"
-      nil
+      raise ContentOtherError
     end
   end
 
@@ -130,7 +132,7 @@ class Scraper
     else
       # FIXME
       Rails.logger.warn "download_with_post: invalid status code: url=#{url}, code=#{res.code}"
-      nil
+      raise ContentOtherError
     end
   end
 
