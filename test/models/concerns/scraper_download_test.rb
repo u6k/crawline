@@ -114,6 +114,45 @@ class ScraperDownloadTest < ActiveSupport::TestCase
       }
     )
 
+    # stub not modified
+    stub_request(:get, "https://blog.u6k.me/304.html").with(headers: { "If-None-Match" => "5b48dca2-41b7" }).to_return(
+      status: 304,
+      headers: {
+        "date" => "Thu, 18 Oct 2018 07:54:56 GMT",
+        "via" => "1.1 varnish",
+        "cache-control" => "max-age=600",
+        "etag" => "5b48dca2-41b7",
+        "expires" => "Thu, 18 Oct 2018 08:03:43 GMT",
+        "age" => "73",
+        "x-served-by" => "cache-sin18020-SIN",
+        "x-cache" => "HIT",
+        "x-cache-hits" => "1",
+        "x-timer" => "S1539849297.647796,VS0,VE0",
+        "vary" => "Accept-Encoding",
+        "x-fastly-request-id" => "6da61b77a90a1bb20b1de03425986f7d5e618dff",
+        "x-case" => "if-none-match"
+      }
+    )
+
+    stub_request(:get, "https://blog.u6k.me/304.html").with(headers: { "If-Modified-Since" => "Fri, 13 Jul 2018 17:08:50 GMT" }).to_return(
+      status: 304,
+      headers: {
+        "date" => "Thu, 18 Oct 2018 07:54:56 GMT",
+        "via" => "1.1 varnish",
+        "cache-control" => "max-age=600",
+        "etag" => "5b48dca2-41b7",
+        "expires" => "Thu, 18 Oct 2018 08:03:43 GMT",
+        "age" => "73",
+        "x-served-by" => "cache-sin18020-SIN",
+        "x-cache" => "HIT",
+        "x-cache-hits" => "1",
+        "x-timer" => "S1539849297.647796,VS0,VE0",
+        "vary" => "Accept-Encoding",
+        "x-fastly-request-id" => "6da61b77a90a1bb20b1de03425986f7d5e618dff",
+        "x-case" => "if-modified-since"
+      }
+    )
+
     # build Scraper
     @scraper = Scraper.new
     @scraper.download_interval = 0.001
@@ -485,12 +524,76 @@ class ScraperDownloadTest < ActiveSupport::TestCase
     assert_equal response, expected_response
   end
 
-  test "download: get not modified" do
-    flunk
+  test "download: get not modified: If-None-Match" do
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/304.html",
+      "method" => "GET",
+      "headers" => {
+        "If-None-Match" => "5b48dca2-41b7"
+      }
+    }
+
+    # execute
+    response = @scraper.download(request)
+
+    # check
+    expected_response = {
+      "headers" => {
+        "date" => "Thu, 18 Oct 2018 07:54:56 GMT",
+        "via" => "1.1 varnish",
+        "cache-control" => "max-age=600",
+        "etag" => "5b48dca2-41b7",
+        "expires" => "Thu, 18 Oct 2018 08:03:43 GMT",
+        "age" => "73",
+        "x-served-by" => "cache-sin18020-SIN",
+        "x-cache" => "HIT",
+        "x-cache-hits" => "1",
+        "x-timer" => "S1539849297.647796,VS0,VE0",
+        "vary" => "Accept-Encoding",
+        "x-fastly-request-id" => "6da61b77a90a1bb20b1de03425986f7d5e618dff",
+        "x-case" => "if-none-match"
+      },
+      "content" => nil
+    }
+
+    assert_equal response, expected_response
   end
 
-  test "download: post not modified" do
-    flunk
+  test "download: get not modified: If-Modified-Since" do
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/304.html",
+      "method" => "GET",
+      "headers" => {
+        "If-Modified-Since" => "Fri, 13 Jul 2018 17:08:50 GMT"
+      }
+    }
+
+    # execute
+    response = @scraper.download(request)
+
+    # check
+    expected_response = {
+      "headers" => {
+        "date" => "Thu, 18 Oct 2018 07:54:56 GMT",
+        "via" => "1.1 varnish",
+        "cache-control" => "max-age=600",
+        "etag" => "5b48dca2-41b7",
+        "expires" => "Thu, 18 Oct 2018 08:03:43 GMT",
+        "age" => "73",
+        "x-served-by" => "cache-sin18020-SIN",
+        "x-cache" => "HIT",
+        "x-cache-hits" => "1",
+        "x-timer" => "S1539849297.647796,VS0,VE0",
+        "vary" => "Accept-Encoding",
+        "x-fastly-request-id" => "6da61b77a90a1bb20b1de03425986f7d5e618dff",
+        "x-case" => "if-modified-since"
+      },
+      "content" => nil
+    }
+
+    assert_equal response, expected_response
   end
 
   test "download: get not found" do
