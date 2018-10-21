@@ -3,6 +3,8 @@ require 'test_helper'
 class CacheContentTest < ActiveSupport::TestCase
 
   def setup
+    WebMock.disable_net_connect!(allow: "s3")
+
     # save blog_page
     request = {
       "url" => "https://blog.u6k.me/2018/06/09/my-development-environment-and-deploy-workflow.html",
