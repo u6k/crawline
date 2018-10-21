@@ -187,6 +187,11 @@ class ScraperDownloadTest < ActiveSupport::TestCase
       body: "Error"
     )
 
+    # stub timeout
+    stub_request(:get, "https://blog.u6k.me/timeout.html").to_timeout
+
+    stub_request(:post, "https://blog.u6k.me/new").with(body: { code: "timeout" }).to_timeout
+
     # build Scraper
     @scraper = Scraper.new
     @scraper.download_interval = 0.001
@@ -689,11 +694,32 @@ class ScraperDownloadTest < ActiveSupport::TestCase
   end
 
   test "download: get timeout" do
-    flunk
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/timeout.html",
+      "method" => "GET"
+    }
+
+    # execute
+    assert_raises(ContentTimeoutError) do
+      @scraper.download(request)
+    end
   end
 
   test "download: post timeout" do
-    flunk
+    # setup
+    request = {
+      "url" => "https://blog.u6k.me/new",
+      "method" => "POST",
+      "parameters" => {
+        "code": "timeout"
+      }
+    }
+
+    # execute
+    assert_raises(ContentTimeoutError) do
+      @scraper.download(request)
+    end
   end
 
 end

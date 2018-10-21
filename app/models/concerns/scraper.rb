@@ -2,10 +2,12 @@ class ContentNotFoundError < StandardError; end
 
 class ContentOtherError < StandardError; end
 
+class ContentTimeoutError < StandardError; end
+
 class Scraper
   extend ActiveSupport::Concern
 
-  attr_accessor :download_interval
+  attr_accessor :download_interval, :retry_limit
   
   @@rules = []
   
@@ -15,6 +17,7 @@ class Scraper
 
   def initialize()
     @download_interval = 1
+    @retry_limit = 5
   end
 
   def find_rule(request)
@@ -23,9 +26,9 @@ class Scraper
 
   def download(request)
     if request["method"] == "GET"
-      download_with_get(request["url"], request["headers"])
+      download_with_get(request["url"], request["headers"], 0)
     elsif request["method"] == "POST"
-      download_with_post(request["url"], request["headers"], request["parameters"])
+      download_with_post(request["url"], request["headers"], request["parameters"], 0)
     else
       Rails.logger.warn "download: method is not GET or POST. method=#{request["method"]}"
     end
@@ -33,7 +36,9 @@ class Scraper
 
   private
 
-  def download_with_get(url, headers)
+  def download_with_get(url, headers, timeout_count)
+    sleep(@download_interval) # FIXME
+
     uri = URI(url)
 
     req = Net::HTTP::Get.new(uri)
@@ -49,8 +54,6 @@ class Scraper
       http.request(req)
     end
 
-    sleep(@download_interval) # FIXME
-
     if res.code == "200"
       response = {
         "headers" => {},
@@ -64,7 +67,7 @@ class Scraper
     elsif res.code == "201" || res.code == "301" || res.code == "302" || res.code == "303"
       redirect_url = URI::join(url, res["Location"]).to_s
 
-      download_with_get(redirect_url, headers)
+      download_with_get(redirect_url, headers, 0)
     elsif res.code == "304"
       response = {
         "headers" => {},
@@ -82,9 +85,20 @@ class Scraper
       Rails.logger.warn "download_with_get: invalid status code: url=#{url}, code=#{res.code}"
       raise ContentOtherError
     end
+  rescue Net::OpenTimeout => e
+    timeout_count += 1
+    Rails.logger.warn "download_with_get: timeout: url=#{url}, timeout_count=#{timeout_count}"
+
+    if timeout_count > @retry_limit
+      raise ContentTimeoutError
+    end
+
+    download_with_get(url, headers, timeout_count)
   end
 
-  def download_with_post(url, headers, data)
+  def download_with_post(url, headers, data, timeout_count)
+    sleep(@download_interval) # FIXME
+
     uri = URI(url)
 
     req = Net::HTTP::Post.new(uri)
@@ -101,8 +115,6 @@ class Scraper
       http.request(req)
     end
 
-    sleep(@download_interval) # FIXME
-
     if res.code == "200"
       response = {
         "headers" => {},
@@ -116,7 +128,7 @@ class Scraper
     elsif res.code == "201" || res.code == "301" || res.code == "302" || res.code == "303"
       redirect_url = URI::join(url, res["Location"]).to_s
 
-      download_with_get(redirect_url, headers)
+      download_with_get(redirect_url, headers, 0)
     elsif res.code == "304"
       response = {
         "headers" => {},
@@ -134,6 +146,15 @@ class Scraper
       Rails.logger.warn "download_with_post: invalid status code: url=#{url}, code=#{res.code}"
       raise ContentOtherError
     end
+  rescue Net::OpenTimeout => e
+    timeout_count += 1
+    Rails.logger.warn "download_with_post: timeout: url=#{url}, timeout_count=#{timeout_count}"
+
+    if timeout_count > @retry_limit
+      raise ContentTimeoutError
+    end
+
+    download_with_post(url, headers, data, timeout_count)
   end
 
 end
