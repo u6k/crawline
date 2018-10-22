@@ -7,21 +7,16 @@ class ContentTimeoutError < StandardError; end
 class Scraper
   extend ActiveSupport::Concern
 
-  attr_accessor :download_interval, :retry_limit
+  attr_accessor :rules, :download_interval, :retry_limit
   
-  @@rules = []
-  
-  def self.add_rule(rule)
-    @@rules << rule
-  end
-
   def initialize()
+    @rules = []
     @download_interval = 1
     @retry_limit = 5
   end
 
   def find_rule(request)
-    rule = @@rules.find { |rule| rule.match_request?(request) }
+    rule = @rules.find { |rule| rule.match_request?(request) }
   end
 
   def download(request)
