@@ -76,37 +76,42 @@ describe "Crawline" do
   end
 
   describe "ResourceRepository" do
+    before do
+      access_key = ENV["AWS_S3_ACCESS_KEY"]
+      secret_key = ENV["AWS_S3_SECRET_KEY"]
+      region = ENV["AWS_S3_REGION"]
+      bucket = ENV["AWS_S3_BUCKET"]
+      endpoint = ENV["AWS_S3_ENDPOINT"]
+      force_path_style = ENV["AWS_S3_FORCE_PATH_STYLE"]
+
+      # Setup S3 bucket for test
+      Aws.config.update({
+        region: region,
+        credentials: Aws::Credentials.new(access_key, secret_key)
+      })
+      s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
+
+      @bucket = s3.bucket(bucket)
+      @bucket.create if not @bucket.exists?
+
+      # Setup ResourceRepository
+      @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style)
+    end
+
     it "put web page data" do
-      bucket = get_s3_bucket
+      @repo.put_s3_object("put_test.txt", "put test")
 
-      Crawline::ResourceRepository.put_s3_object(bucket, "put_test.txt", "put test")
-
-      obj = bucket.object("put_test.txt")
+      obj = @bucket.object("put_test.txt")
       expect(obj.get.body.read(obj.size)).to eq("put test")
     end
 
     it "get web page data" do
-      bucket = get_s3_bucket
-
-      obj = bucket.object("get_test.txt")
+      obj = @bucket.object("get_test.txt")
       obj.put(body: "get test")
 
-      data = Crawline::ResourceRepository.get_s3_object(bucket, "get_test.txt")
+      data = @repo.get_s3_object("get_test.txt")
 
       expect(data).to eq("get test")
-    end
-
-    def get_s3_bucket
-      Aws.config.update({
-        region: ENV["AWS_S3_REGION"],
-        credentials: Aws::Credentials.new(ENV["AWS_S3_ACCESS_KEY"], ENV["AWS_S3_SECRET_KEY"])
-      })
-      s3 = Aws::S3::Resource.new(endpoint: ENV["AWS_S3_ENDPOINT"], force_path_style: ENV["AWS_S3_FORCE_PATH_STYLE"])
-
-      bucket = s3.bucket(ENV["AWS_S3_BUCKET"])
-      bucket.create if not bucket.exists?
-
-      bucket
     end
   end
 end
