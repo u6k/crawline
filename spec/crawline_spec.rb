@@ -32,6 +32,8 @@ describe "Crawline" do
       WebMock.stub_request(:get, "http://test.crawline.u6k.me/500.html").to_return(
         body: "Response 500 Internal Server Error",
         status: [500, "Internal Server Error"])
+
+      WebMock.stub_request(:get, "http://test.crawline.u6k.me/timeout").to_timeout
     end
 
     after do
@@ -65,7 +67,7 @@ describe "Crawline" do
     it "download fail with timeout" do
       expect {
         Crawline::Downloader.download_with_get("http://test.crawline.u6k.me/timeout")
-      }.to raise_error(RuntimeError, "Timeout")
+      }.to raise_error(Net::OpenTimeout)
     end
   end
 

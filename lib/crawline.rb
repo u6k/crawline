@@ -14,8 +14,11 @@ module Crawline
         http.request(req)
       end
 
-      if res.code == "200"
+      case res
+      when Net::HTTPSuccess
         res.body
+      when Net::HTTPRedirection
+        download_with_get(res["location"])
       else
         raise "#{res.code} #{res.message}"
       end
@@ -23,31 +26,7 @@ module Crawline
   end
 
   class ResourceRepository
-    def self.get_s3_bucket
-      Aws.config.update({
-        region: Rails.application.secrets.s3_region,
-        credentials: Aws::Credentials.new(Rails.application.secrets.s3_access_key, Rails.application.secrets.s3_secret_key)
-      })
-      s3 = Aws::S3::Resource.new(endpoint: Rails.application.secrets.s3_endpoint, force_path_style: true)
-
-      bucket = s3.bucket(Rails.application.secrets.s3_bucket)
-    end
-
     def self.put_s3_object(bucket, file_name, data)
-      # FIXME: Remove
-      # data compress
-      #data_7z = StringIO.new("")
-      #SevenZipRuby::Writer.open(data_7z) do |szr|
-      #  szr.level = 9
-      #  szr.add_data(data, file_name.split("/")[-1])
-      #end
-
-      #data_7z.rewind
-      #raise "Compress error" if not SevenZipRuby::Reader.verify(data_7z)
-
-      #data_7z.rewind
-      #data_7z = data_7z.read
-
       # upload
       obj_original = bucket.object(file_name)
       obj_original.put(body: data)
@@ -62,24 +41,6 @@ module Crawline
       # download
       object = bucket.object(file_name)
       data = object.get.body.read(object.size)
-
-      # FIXME: Remove
-      # data extract
-      #data_7z = StringIO.new(data_7z)
-      #raise "Extract error" if not SevenZipRuby::Reader.verify(data_7z)
-
-      #data_7z.rewind
-
-      #data = nil
-      #SevenZipRuby::Reader.open(data_7z) do |szr|
-      #  data = szr.extract_data(file_name.split("/")[-1])
-      #end
-
-      data
-    end
-
-    def self.exists_s3_object?(bucket, file_name)
-      bucket.object(file_name + ".7z").exists?
     end
   end
 
