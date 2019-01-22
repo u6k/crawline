@@ -9,6 +9,10 @@ describe "Crawline" do
 
   describe "Downloader" do
     before do
+      # Setup Downloader
+      @downloader = Crawline::Downloader.new("crawline/0.1.0 (https://github.com/u6k/crawline")
+
+      # Setup webmock
       WebMock.enable!
 
       WebMock.stub_request(:get, "http://test.crawline.u6k.me/200.html").to_return(
@@ -41,32 +45,32 @@ describe "Crawline" do
     end
 
     it "download successful" do
-      download_result = Crawline::Downloader.download_with_get("http://test.crawline.u6k.me/200.html")
+      download_result = @downloader.download_with_get("http://test.crawline.u6k.me/200.html")
 
       expect(download_result).to eq("Response 200 OK")
     end
 
     it "download with redirect" do
-      download_result = Crawline::Downloader.download_with_get("http://test.crawline.u6k.me/301.html")
+      download_result = @downloader.download_with_get("http://test.crawline.u6k.me/301.html")
 
       expect(download_result).to eq("Response 200 OK")
     end
 
     it "download fail with 4xx" do
       expect {
-        Crawline::Downloader.download_with_get("http://test.crawline.u6k.me/404.html")
+        @downloader.download_with_get("http://test.crawline.u6k.me/404.html")
       }.to raise_error(RuntimeError, "404 Not Found")
     end
 
     it "download fail with 5xx" do
       expect {
-        Crawline::Downloader.download_with_get("http://test.crawline.u6k.me/500.html")
+        @downloader.download_with_get("http://test.crawline.u6k.me/500.html")
       }.to raise_error(RuntimeError, "500 Internal Server Error")
     end
 
     it "download fail with timeout" do
       expect {
-        Crawline::Downloader.download_with_get("http://test.crawline.u6k.me/timeout")
+        @downloader.download_with_get("http://test.crawline.u6k.me/timeout")
       }.to raise_error(Net::OpenTimeout)
     end
   end

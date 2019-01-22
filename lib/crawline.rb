@@ -3,11 +3,15 @@ require "crawline/version"
 module Crawline
 
   class Downloader
-    def self.download_with_get(url)
+    def initialize(user_agent)
+      @user_agent = user_agent
+    end
+
+    def download_with_get(url)
       uri = URI(url)
 
       req = Net::HTTP::Get.new(uri)
-      req["User-Agent"] = "curl/7.54.0"
+      req["User-Agent"] = @user_agent
       req["Accept"] = "*/*"
 
       res = Net::HTTP.start(uri.hostname, uri.port, :use_ssl => uri.scheme == "https") do |http|
