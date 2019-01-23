@@ -6,126 +6,73 @@
 [![Website](https://img.shields.io/website-up-down-green-red/https/redmine.u6k.me%2Fprojects%2Fcrawline.svg?label=u6k.Redmine)](https://redmine.u6k.me/projects/crawline)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-> Webクローリングとスクレイピングを行う基盤アプリケーション
+> クローラー向けのクラス・ライブラリ
 
-Webページをデータソースとするアプリケーションに向けて、当基盤がWebクローリングとスクレイピングを行い、その結果のデータを提供します。当基盤にルールを登録しておいて、URLをパラメータとしてクローリングを要求すると、ルールに沿ってクローリングとスクレイピングを行います。ダウンロードしたデータの管理、キャッシュ管理などは当基盤が行い、個別のアプリケーションはデータモデルの構築に専念することができます。
+クローラー向けにクローリング・エンジン、キャッシュ管理、スクレイピング・ルールのベース・クラスを提供します。クローラーは、スクレイピング・ルールをクラスとして実装して、クローリング・エンジンに登録することで、簡単にクローリングを行うことができます。
 
 __Table of Contents__
 
-<!-- TOC depthFrom:2 -->
-
-- [Security](#security)
 - [Background](#background)
 - [Install](#install)
 - [Usage](#usage)
-  - [前提](#前提)
-  - [アプリケーションを起動する](#アプリケーションを起動する)
-  - [スクレイピングのルールを定義する](#スクレイピングのルールを定義する)
-  - [URLを起点にクロール、スクレイピングを行う](#urlを起点にクロールスクレイピングを行う)
-- [API](#api)
+  - [S3をセットアップする](#s3%E3%82%92%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B)
+  - [スクレイピング・ルールを作成する](#%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E3%83%AB%E3%83%BC%E3%83%AB%E3%82%92%E4%BD%9C%E6%88%90%E3%81%99%E3%82%8B)
+  - [クローリングを開始する](#%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%82%92%E9%96%8B%E5%A7%8B%E3%81%99%E3%82%8B)
+- [Reference](#reference)
+  - [コンポーネント構造](#%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E6%A7%8B%E9%80%A0)
+  - [API](#api)
 - [Maintainer](#maintainer)
 - [Contribute](#contribute)
 - [License](#license)
 
-<!-- /TOC -->
-
-## Security
-
-個人用のアプリケーションであり、複数人数が使用することは想定していません。外部からはジョブ・スケジューラーでジョブを実行するだけです。
-
-そのため、認証機能は実装しません。nginx-proxyの機能でBASIC認証を実装しても良いですし、Let's Encryptでサーバー証明書を設定しても良いですが、それは外部アプリケーションの役割とします。
-
 ## Background
 
-いくつかの似たようなスクレイピング・アプリケーションを作成してきました。新しいサイトのスクレイピング要件はこれからも出続けるでしょうし、その度に新しいアプリケーションを作るのは、時間とマシン・リソースの無駄と考えます。
+クローラーのライブラリやフレームワークはいくつもありますが、これらは私がほしい要件を満たしませんでした。私は次の要件を満たしたく、そのために当ライブラリを実装しました。
 
-そのため、クローリングとスクレイピングの基盤を構築して、複数のサイトに対するスクレイピングを統合したいと考えます。ページに対する解析方法、検証方法、リンク解析方法などを、コードで制御して、気軽に追加・変更できるようにしたいです。ページのキャッシュ制御、旧バージョンの管理なども任せたいです。
+- Webページのダウンロード可否を複雑なルールで制御したい
+  - 前回のダウンロードが1日前以上で、ページ内のデータが1年以内の場合、など
+- ダウンロードしたデータはS3ストレージに格納したい
+  - 既存のクローラーは、ほとんどの場合、ローカル・ストレージに格納する機能を持っています
+- Webページを解析して次にダウンロードするURLを構築したい
+  - 単純にWebページのaタグを辿るのではなく
 
-解析後のデータのモデル構築などは、個々のアプリケーションがやるべきだと思っていますので、ここでは実装しません。
+クローリングをどのように実行するのか(CLIアプリケーション、Webアプリケーション、など…)は、当ライブラリを実装する側の責務とします。
 
 ## Install
 
-__TODO:__ 基盤コードとルール・コードの管理を分けたいです。そのため、[gemによる提供を考えます](https://redmine.u6k.me/issues/6560)
+```
+gem 'crawline', :git => 'git://github.com/u6k/crawline.git'
+```
 
 ## Usage
 
-### 前提
+### S3をセットアップする
 
-crawlineは、次のソフトウェアを必要とします。
+ダウンロードしたWebデータは、S3互換ストレージに格納します。あらかじめ、Amazon S3のバケットを作成して、アクセス・キーなど必要情報を入手してください。
 
-- Docker
+ローカル環境のみで実行したい場合、S3互換ストレージとして[minio](https://www.minio.io/)などを利用することができます。実際、当プロジェクトもテスト実行の場合は`minio`を利用しています。詳細は、[docker-compose.yml](https://github.com/u6k/crawline/blob/master/docker-compose.yml)を参照してください。
 
-```
-$ docker version
-Client:
- Version:           18.06.0-ce
- API version:       1.38
- Go version:        go1.10.3
- Git commit:        0ffa825
- Built:             Wed Jul 18 19:09:33 2018
- OS/Arch:           linux/amd64
- Experimental:      false
+### スクレイピング・ルールを作成する
 
-Server:
- Engine:
-  Version:          18.06.0-ce
-  API version:      1.38 (minimum version 1.12)
-  Go version:       go1.10.3
-  Git commit:       0ffa825
-  Built:            Wed Jul 18 19:07:38 2018
-  OS/Arch:          linux/amd64
-  Experimental:     false
-```
+スクレイピング・ルールの作成は、次のspecを参照してください。
 
-- docker-compose
+__TODO:__ ルール実装例を記述する
 
-```
-$ docker-compose version
-docker-compose version 1.21.0, build 5920eb0
-docker-py version: 3.2.1
-CPython version: 3.6.5
-OpenSSL version: OpenSSL 1.0.1t  3 May 2016
-```
+### クローリングを開始する
 
-### アプリケーションを起動する
+クローリングを開始するには、次のように実装してください。
 
-ビルドして、起動します。
+__TODO:__ クローリング開始の実装例を記述する
 
-```
-$ docker-compose build
-$ docker-compose up -d
-```
+## Reference
 
-Webブラウザで http://localhost:3000/ にアクセスすると、アプリケーションを利用できます。
+### コンポーネント構造
 
-### スクレイピングのルールを定義する
+__TODO:__ コンポーネント構造を説明する
 
-__TODO:__ BaseRuleクラスのAPIリファレンスのリンクを貼る
-
-ページに対する解析、検証、リンク抽出方法は、クラスで定義します。BaseRuleクラスを継承して、次のメソッドを実装します。
-
-|メソッド|実装する処理|
-|---|---|
-|match_request?(request)|このルールで渡されたリクエストを処理するか判定する|
-|want_redownload?(latest_content)|再ダウンロードするか判定する|
-|parse(downloaded_content)|ダウンロードしたコンテンツを解析する|
-
-具体的な実装例は、[テストコード](https://github.com/u6k/crawline/blob/master/test/models/concerns/rule_for_test.rb)を参照してください。
-
-ダウンロード制御、コンテンツの保存、キャッシュ制御はcrawlineが自動的に行います。
-
-### URLを起点にクロール、スクレイピングを行う
-
-__TODO:__ 目的、具体的な手順、例を示す
-
-外部からクロールして欲しいURLを指定すると、ルールに従って解析して、リンクを辿れるだけ辿ります。
-
-## API
+### API
 
 __TODO:__ APIドキュメントへのリンクを示す
-
-- /okcomputer/all.json
-  - ヘルスチェックを返します
 
 ## Maintainer
 
@@ -136,7 +83,7 @@ __TODO:__ APIドキュメントへのリンクを示す
 
 ## Contribute
 
-当プロジェクトに興味を持っていただき、ありがとうございます。[新しいチケットを起票](https://redmine.u6k.me/projects/crawline/issues/new)していただくか、プルリクエストをサブミットしていただけると幸いです。
+当プロジェクトに興味を持っていただき、ありがとうございます。[新しいチケットを起票](https://redmine.u6k.me/projects/crawline/issues/)していただくか、プルリクエストをサブミットしていただけると幸いです。
 
 当プロジェクトは、[Contributor Covenant](https://www.contributor-covenant.org/version/1/4/code-of-conduct)に準拠します。
 
