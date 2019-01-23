@@ -101,17 +101,21 @@ describe "Crawline" do
     it "put web page data" do
       @repo.put_s3_object("put_test.txt", "put test")
 
-      obj = @bucket.object("put_test.txt")
+      obj = @bucket.object("put_test.txt.latest")
       expect(obj.get.body.read(obj.size)).to eq("put test")
     end
 
     it "get web page data" do
-      obj = @bucket.object("get_test.txt")
+      obj = @bucket.object("get_test.txt.latest")
       obj.put(body: "get test")
 
       data = @repo.get_s3_object("get_test.txt")
 
       expect(data).to eq("get test")
+    end
+
+    it "remove all cache data" do
+      @repo.remove_s3_objects
     end
   end
 end
