@@ -38,23 +38,24 @@ module Crawline
       s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
 
       @bucket = s3.bucket(bucket)
+      @bucket.create if not @bucket.exists?
     end
 
     def put_s3_object(file_name, data)
-      # upload
-      obj_original = @bucket.object(file_name)
+      obj_original = @bucket.object(file_name + ".latest")
       obj_original.put(body: data)
 
-      obj_backup = @bucket.object(file_name + ".bak_" + DateTime.now.strftime("%Y%m%d-%H%M%S"))
+      obj_backup = @bucket.object(file_name + "." + Time.now.to_i.to_s)
       obj_backup.put(body: data)
-
-      { original: obj_original.key, backup: obj_backup.key }
     end
 
     def get_s3_object(file_name)
-      # download
-      object = @bucket.object(file_name)
+      object = @bucket.object(file_name + ".latest")
       data = object.get.body.read(object.size)
+    end
+
+    def remove_s3_objects
+      @bucket.objects.batch_delete!
     end
   end
 
