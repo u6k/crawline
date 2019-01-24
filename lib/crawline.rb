@@ -1,4 +1,5 @@
 require "crawline/version"
+require "aws-sdk-s3"
 
 module Crawline
 
