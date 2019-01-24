@@ -36,6 +36,13 @@ describe "Crawline" do
           "Location" => "http://test.crawline.u6k.me/200.html"
         })
 
+      WebMock.stub_request(:get, "http://test.crawline.u6k.me/301_path_only.html").to_return(
+        body: "Response 301 Moved Permanently",
+        status: [301, "Moved Permanently"],
+        headers: {
+          "Location" => "/200.html"
+        })
+
       WebMock.stub_request(:get, "http://test.crawline.u6k.me/404.html").to_return(
         body: "Response 404 Not Found",
         status: [404, "Not Found"])
@@ -65,6 +72,12 @@ describe "Crawline" do
 
     it "download with redirect" do
       download_result = @downloader.download_with_get("http://test.crawline.u6k.me/301.html")
+
+      expect(download_result).to eq("Response 200 OK")
+    end
+
+    it "download with redirect path only" do
+      download_result = @downloader.download_with_get("http://test.crawline.u6k.me/301_path_only.html")
 
       expect(download_result).to eq("Response 200 OK")
     end

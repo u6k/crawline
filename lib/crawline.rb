@@ -27,7 +27,8 @@ module Crawline
       when Net::HTTPSuccess
         res.body
       when Net::HTTPRedirection
-        download_with_get(res["location"])
+        redirect_url = URI.join(url, res["location"]).to_s
+        download_with_get(redirect_url)
       else
         raise "#{res.code} #{res.message}"
       end
