@@ -125,6 +125,14 @@ describe "Crawline" do
       expect(obj).to eq("test")
     end
 
+    it "exists s3 object" do
+      expect(@repo.exists_s3_object?("exists.txt")).to eq(false)
+
+      @repo.put_s3_object("exists.txt", "test")
+
+      expect(@repo.exists_s3_object?("exists.txt")).to eq(true)
+    end
+
     it "remove all data" do
       @repo.remove_s3_objects
     end
