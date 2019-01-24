@@ -22,11 +22,25 @@ describe "Crawline" do
           "Content-Type" => "text/plain"
         })
 
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/200.html").to_return(
+        body: "Response 200 OK with SSL",
+        status: [200, "OK"],
+        headers: {
+          "Content-Type" => "text/plain"
+        })
+
       WebMock.stub_request(:get, "http://test.crawline.u6k.me/301.html").to_return(
         body: "Response 301 Moved Permanently",
         status: [301, "Moved Permanently"],
         headers: {
           "Location" => "http://test.crawline.u6k.me/200.html"
+        })
+
+      WebMock.stub_request(:get, "http://test.crawline.u6k.me/301_path_only.html").to_return(
+        body: "Response 301 Moved Permanently",
+        status: [301, "Moved Permanently"],
+        headers: {
+          "Location" => "/200.html"
         })
 
       WebMock.stub_request(:get, "http://test.crawline.u6k.me/404.html").to_return(
@@ -50,8 +64,20 @@ describe "Crawline" do
       expect(download_result).to eq("Response 200 OK")
     end
 
+    it "download successful with ssl" do
+      download_result = @downloader.download_with_get("https://test.crawline.u6k.me/200.html")
+
+      expect(download_result).to eq("Response 200 OK with SSL")
+    end
+
     it "download with redirect" do
       download_result = @downloader.download_with_get("http://test.crawline.u6k.me/301.html")
+
+      expect(download_result).to eq("Response 200 OK")
+    end
+
+    it "download with redirect path only" do
+      download_result = @downloader.download_with_get("http://test.crawline.u6k.me/301_path_only.html")
 
       expect(download_result).to eq("Response 200 OK")
     end

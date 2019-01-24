@@ -1,4 +1,5 @@
 require "crawline/version"
+
 require "aws-sdk-s3"
 
 module Crawline
@@ -15,7 +16,10 @@ module Crawline
       req["User-Agent"] = @user_agent
       req["Accept"] = "*/*"
 
-      res = Net::HTTP.start(uri.hostname, uri.port, :use_ssl => uri.scheme == "https") do |http|
+      http = Net::HTTP.new(uri.hostname, uri.port)
+      http.use_ssl = true if url.start_with?("https://")
+
+      res = http.start do
         http.request(req)
       end
 
@@ -23,7 +27,8 @@ module Crawline
       when Net::HTTPSuccess
         res.body
       when Net::HTTPRedirection
-        download_with_get(res["location"])
+        redirect_url = URI.join(url, res["location"]).to_s
+        download_with_get(redirect_url)
       else
         raise "#{res.code} #{res.message}"
       end
