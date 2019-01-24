@@ -51,7 +51,14 @@ module Crawline
 
     def get_s3_object(file_name)
       object = @bucket.object(file_name + ".latest")
-      data = object.get.body.read(object.size)
+
+      begin
+        data = object.get.body.read(object.size)
+      rescue Aws::S3::Errors::NoSuchKey
+        data = nil
+      end
+
+      data
     end
 
     def remove_s3_objects
