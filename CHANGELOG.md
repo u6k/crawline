@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2019-01-24
+
+### Fixed
+
+- [#6748: SSL通信に対応する](https://redmine.u6k.me/issues/6748)
+- [#6749: リダイレクトにおいてLocationヘッダーにパスのみ指定された場合に対応する](https://redmine.u6k.me/issues/6749)
+
 ## [0.2.4] - 2019-01-24
 
 ### Added
