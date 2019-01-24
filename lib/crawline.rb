@@ -62,6 +62,10 @@ module Crawline
       data
     end
 
+    def exists_s3_object?(file_name)
+      (not get_s3_object(file_name).nil?)
+    end
+
     def remove_s3_objects
       @bucket.objects.batch_delete!
     end
