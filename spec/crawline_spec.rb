@@ -98,14 +98,14 @@ describe "Crawline" do
       @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style)
     end
 
-    it "put web page data" do
+    it "put data" do
       @repo.put_s3_object("put_test.txt", "put test")
 
       obj = @bucket.object("put_test.txt.latest")
       expect(obj.get.body.read(obj.size)).to eq("put test")
     end
 
-    it "get web page data" do
+    it "get data" do
       obj = @bucket.object("get_test.txt.latest")
       obj.put(body: "get test")
 
@@ -114,7 +114,18 @@ describe "Crawline" do
       expect(data).to eq("get test")
     end
 
-    it "remove all cache data" do
+    it "get nil when object not found" do
+      obj = @repo.get_s3_object("nil.txt")
+
+      expect(obj).to eq(nil)
+
+      @repo.put_s3_object("nil.txt", "test")
+      obj = @repo.get_s3_object("nil.txt")
+
+      expect(obj).to eq("test")
+    end
+
+    it "remove all data" do
       @repo.remove_s3_objects
     end
   end
