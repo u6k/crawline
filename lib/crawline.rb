@@ -76,4 +76,18 @@ module Crawline
     end
   end
 
+  class Engine
+    def initialize(rules)
+      @rules = rules
+    end
+
+    def select_rule(url)
+      rule = @rules.find do |url_pattern, clazz|
+        url_pattern.match(url)
+      end
+
+      (rule.nil? ? nil : rule[1])
+    end
+  end
+
 end

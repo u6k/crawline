@@ -164,3 +164,73 @@ describe "Crawline" do
     end
   end
 end
+
+describe Crawline::Engine do
+  describe "#initialize" do
+    # FIXME
+  end
+
+  describe "#select_rule" do
+    before do
+      rules = {
+        /https:\/\/blog.example.com\/index\.html/ => BlogListTestRule,
+        /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestRule,
+        /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestRule,
+      }
+
+      @engine = Crawline::Engine.new(rules)
+    end
+
+    it "match rule (index)" do
+      url = "https://blog.example.com/index.html"
+
+      expect(@engine.select_rule(url)).to eq BlogListTestRule
+    end
+
+    it "match rule (page list)" do
+      # page 1
+      url = "https://blog.example.com/page1.html"
+
+      expect(@engine.select_rule(url)).to eq BlogListTestRule
+
+      # page 9
+      url = "https://blog.example.com/page9.html"
+
+      expect(@engine.select_rule(url)).to eq BlogListTestRule
+
+      # page 10
+      url = "https://blog.example.com/page10.html"
+
+      expect(@engine.select_rule(url)).to eq BlogListTestRule
+    end
+
+    it "match rule (page)" do
+      url = "https://blog.example.com/pages/scp-173.html"
+
+      expect(@engine.select_rule(url)).to eq BlogPageTestRule
+    end
+
+    it "not match rule" do
+      # index.html instead of index.htm
+      url = "https://blog.example.com/index.htm"
+
+      expect(@engine.select_rule(url)).to be nil
+
+      # page1.html instead of page-1.html
+      url = "https://blog.example.com/page-1.html"
+
+      expect(@engine.select_rule(url)).to be nil
+
+      # /pages/ instead of /page/
+      url = "https://blog.example.com/page/scp-173.html"
+
+      expect(@engine.select_rule(url)).to be nil
+    end
+  end
+
+  class BlogListTestRule
+  end
+
+  class BlogPageTestRule
+  end
+end
