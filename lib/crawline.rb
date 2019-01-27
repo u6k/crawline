@@ -77,8 +77,56 @@ module Crawline
   end
 
   class Engine
-    def initialize(rules)
+    def initialize(downloader, repo, rules)
+      @downloader = downloader
+      @repo = repo
       @rules = rules
+    end
+
+    def crwal(url)
+      # select rule
+      rule = select_rule(url)
+
+      if rule.nil?
+        return
+      end
+
+      # get cache
+      s3_path = convert_url_to_s3_path(url)
+      data = @repo.get_s3_object(s3_path + ".data")
+
+      # download
+      new_data = 
+        if data.nil?
+          new_data = @downloader.download_with_get(url)
+        else
+          rule_instance = rule.new(url, data)
+
+          if rule_instance.redownload?
+            new_data = @downloader.download_with_get(url)
+          else
+            nil
+          end
+        end
+
+      if new_data.nil?
+        return
+      end
+
+      # validate
+      rule_instance = rule.new(url, new_data)
+
+      if not rule_instance.valid?
+        return
+      end
+
+      # save
+      @repo.put_s3_object(s3_path + ".data", new_data)
+
+      # crawl next links
+      rule_instance.related_links.each do |url|
+        crawl(url)
+      end
     end
 
     def select_rule(url)
@@ -87,6 +135,28 @@ module Crawline
       end
 
       (rule.nil? ? nil : rule[1])
+    end
+
+    def convert_url_to_s3_path(url)
+      OpenSSL::Digest::SHA256.hexdigest(url)
+    end
+  end
+
+  class BaseRule
+    def redownload?
+      raise "Not implemented."
+    end
+
+    def valid?
+      raise "Not implemented."
+    end
+
+    def related_links
+      raise "Not implemented."
+    end
+
+    def parse
+      raise "Not implemented."
     end
   end
 
