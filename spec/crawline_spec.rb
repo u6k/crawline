@@ -313,8 +313,40 @@ describe Crawline::Engine do
   end
 
   class BlogListTestRule < Crawline::BaseRule
+    def initialize(url, data)
+      @url = url
+      @data = data
+    end
+
+    def redownload?
+      true
+    end
   end
 
   class BlogPageTestRule < Crawline::BaseRule
+    def initialize(url, data)
+      @url = url
+      @data = data
+    end
+
+    def redownload?
+      (@result["updated"].year >= 2018)
+    end
+
+    def valid?
+      (not @result["updated"].nil?)
+    end
+
+    private
+
+    def parse
+      @result = {}
+
+      doc = Nokogiri::HTML.parse(@data, nil, "UTF-8")
+
+      doc.xpath("//div[@id='updated']").each do |div|
+        @result["updated"] = Time.parse(div.text)
+      end
+    end
   end
 end
