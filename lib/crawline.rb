@@ -92,8 +92,7 @@ module Crawline
       end
 
       # get cache
-      s3_path = convert_url_to_s3_path(url)
-      data = @repo.get_s3_object(s3_path + ".data")
+      latest_data = get_latest_data_from_storage(url)
 
       # download
       new_data = 
@@ -135,6 +134,11 @@ module Crawline
       end
 
       (rule.nil? ? nil : rule[1])
+    end
+
+    def get_latest_data_from_storage(url)
+      s3_path = convert_url_to_s3_path(url)
+      data = @repo.get_s3_object(s3_path + ".data")
     end
 
     def convert_url_to_s3_path(url)
