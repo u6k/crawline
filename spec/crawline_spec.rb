@@ -406,6 +406,20 @@ describe Crawline::Engine do
     end
   end
 
+  describe "#crawl" do
+    it "download all pages" do
+      raise "Not implemented."
+    end
+
+    it "redownload some pages" do
+      raise "Not implemented."
+    end
+
+    it "download error (4xx, 5xx, timeout)" do
+      raise "Not implemented."
+    end
+  end
+
   class BlogListTestRule < Crawline::BaseRule
     def initialize(url, data)
       @url = url
