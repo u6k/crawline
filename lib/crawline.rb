@@ -95,18 +95,7 @@ module Crawline
       latest_data = get_latest_data_from_storage(url)
 
       # download
-      new_data = 
-        if data.nil?
-          new_data = @downloader.download_with_get(url)
-        else
-          rule_instance = rule.new(url, data)
-
-          if rule_instance.redownload?
-            new_data = @downloader.download_with_get(url)
-          else
-            nil
-          end
-        end
+      new_data = download_or_redownload(url, rule, data)
 
       if new_data.nil?
         return
@@ -120,7 +109,7 @@ module Crawline
       end
 
       # save
-      @repo.put_s3_object(s3_path + ".data", new_data)
+      put_data_to_storage(url, new_data)
 
       # crawl next links
       rule_instance.related_links.each do |url|
@@ -143,6 +132,25 @@ module Crawline
 
     def convert_url_to_s3_path(url)
       OpenSSL::Digest::SHA256.hexdigest(url)
+    end
+
+    def download_or_redownload(url, rule, data)
+      if data.nil?
+        new_data = @downloader.download_with_get(url)
+      else
+        rule_instance = rule.new(url, data)
+
+        if rule_instance.redownload?
+          new_data = @downloader.download_with_get(url)
+        else
+          nil
+        end
+      end
+    end
+
+    def put_data_to_storage(url, data)
+      s3_path = convert_url_to_s3_path(url)
+      @repo.put_s3_object(s3_path + ".data", data)
     end
   end
 
