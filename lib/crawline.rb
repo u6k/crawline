@@ -78,6 +78,17 @@ module Crawline
 
   class Engine
     def initialize(downloader, repo, rules)
+      raise ArgumentError, "downloader is nil." if downloader.nil?
+      raise ArgumentError, "repo is nil." if repo.nil?
+      raise ArgumentError, "rules is nil." if rules.nil?
+
+      raise TypeError, "downloader is not Crawline::Downloader." if not downloader.is_a?(Crawline::Downloader)
+      raise TypeError, "repo is not Crawline::ResourceRepository." if not repo.is_a?(Crawline::ResourceRepository)
+      rules.each do |url_pattern, rule|
+        raise TypeError, "rules is not Hash<Regexp, Rule>." if not url_pattern.is_a?(Regexp)
+        # FIXME: Check BaseRule subclass ... raise TypeError, "rules is not Hash<Regexp, Rule>." if not rule.is_a?(Crawline::BaseRule)
+      end
+
       @downloader = downloader
       @repo = repo
       @rules = rules

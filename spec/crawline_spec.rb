@@ -166,19 +166,57 @@ describe "Crawline" do
 end
 
 describe Crawline::Engine do
+  before do
+    @downloader = Crawline::Downloader.new("test/0.0.0")
+
+    @repo = Crawline::ResourceRepository.new(
+      ENV["AWS_S3_ACCESS_KEY"],
+      ENV["AWS_S3_SECRET_KEY"],
+      ENV["AWS_S3_REGION"],
+      ENV["AWS_S3_BUCKET"],
+      ENV["AWS_S3_ENDPOINT"],
+      ENV["AWS_S3_FORCE_PATH_STYLE"])
+
+    @rules = {
+      /https:\/\/blog.example.com\/index\.html/ => BlogListTestRule,
+      /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestRule,
+      /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestRule,
+    }
+  end
+
   describe "#initialize" do
-    # FIXME
+    it "raise ArgumentError when downloader is nil" do
+      expect { Crawline::Engine.new(nil, @repo, @rules) }.to raise_error ArgumentError, "downloader is nil."
+    end
+
+    it "raise TypeError when downloader is not Crawline::Downloader" do
+      expect { Crawline::Engine.new("test", @repo, @rules) }.to raise_error TypeError, "downloader is not Crawline::Downloader."
+    end
+
+    it "raise ArgumentError when repo is nil." do
+      expect { Crawline::Engine.new(@downloader, nil, @rules) }.to raise_error ArgumentError, "repo is nil."
+    end
+
+    it "raise TypeError when repo is not Crawline::ResourceRepository" do
+      expect { Crawline::Engine.new(@downloader, "test", @rules) }.to raise_error TypeError, "repo is not Crawline::ResourceRepository."
+    end
+
+    it "raise ArgumentError when rules is nil" do
+      expect { Crawline::Engine.new(@downloader, @repo, nil) }.to raise_error ArgumentError, "rules is nil."
+    end
+
+    it "raise TypeError when rules is not Hash<Regexp, Rule>" do
+      @rules = {
+        "https://blog.example.com/pages/scp-173.html" => BlogPageTestRule
+      }
+
+      expect { Crawline::Engine.new(@downloader, @repo, @rules) }.to raise_error TypeError, "rules is not Hash<Regexp, Rule>."
+    end
   end
 
   describe "#select_rule" do
     before do
-      rules = {
-        /https:\/\/blog.example.com\/index\.html/ => BlogListTestRule,
-        /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestRule,
-        /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestRule,
-      }
-
-      @engine = Crawline::Engine.new(rules)
+      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
     end
 
     it "match rule (index)" do
@@ -228,9 +266,9 @@ describe Crawline::Engine do
     end
   end
 
-  class BlogListTestRule
+  class BlogListTestRule < Crawline::BaseRule
   end
 
-  class BlogPageTestRule
+  class BlogPageTestRule < Crawline::BaseRule
   end
 end
