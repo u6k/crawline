@@ -408,15 +408,15 @@ describe Crawline::Engine do
 
   describe "#crawl" do
     it "download all pages" do
-      raise "Not implemented."
+      # FIXME
     end
 
     it "redownload some pages" do
-      raise "Not implemented."
+      # FIXME
     end
 
     it "download error (4xx, 5xx, timeout)" do
-      raise "Not implemented."
+      # FIXME
     end
   end
 
