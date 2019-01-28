@@ -167,6 +167,7 @@ end
 
 describe Crawline::Engine do
   before do
+    # initialize test target object
     @downloader = Crawline::Downloader.new("test/0.0.0")
 
     @repo = Crawline::ResourceRepository.new(
@@ -182,6 +183,9 @@ describe Crawline::Engine do
       /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestRule,
       /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestRule,
     }
+
+    # remove all test data
+    @repo.remove_s3_objects
   end
 
   describe "#initialize" do
@@ -263,6 +267,48 @@ describe Crawline::Engine do
       url = "https://blog.example.com/page/scp-173.html"
 
       expect(@engine.select_rule(url)).to be nil
+    end
+  end
+
+  describe "#get_latest_data_from_storage" do
+    before do
+      # put test data
+      @repo.put_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", "test")
+
+      # initialize Crawline::Engine
+      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+    end
+
+    it "exist data" do
+      data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+
+      expect(data).to eq "test"
+    end
+
+    it "not exist data" do
+      data = @engine.get_latest_data_from_storage("scp-173.html")
+
+      expect(data).to be nil
+    end
+  end
+
+  describe "#put_data_to_storage" do
+    before do
+      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+    end
+
+    it "not exist before put" do
+      data = @repo.get_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
+
+      expect(data).to be nil
+    end
+
+    it "exist after put" do
+      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", "test")
+
+      data = @repo.get_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
+
+      expect(data).to eq "test"
     end
   end
 
