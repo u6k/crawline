@@ -1,6 +1,7 @@
 require "spec_helper"
 require "webmock/rspec"
 require "aws-sdk-s3"
+require "nokogiri"
 
 describe "Crawline" do
   it "has a version number" do
@@ -312,6 +313,99 @@ describe Crawline::Engine do
     end
   end
 
+  describe "#download_or_redownload" do
+    before do
+      # Setup engine
+      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+
+      # Setup webmock
+      WebMock.enable!
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/index.html").
+        to_return(body: File.new("spec/data/index.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/page2.html").
+        to_return(body: File.new("spec/data/page2.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/page3.html").
+        to_return(body: File.new("spec/data/page3.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-049.html").
+        to_return(body: File.new("spec/data/pages/scp-049.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-055.html").
+        to_return(body: File.new("spec/data/pages/scp-055.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-087.html").
+        to_return(body: File.new("spec/data/pages/scp-087.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-093.html").
+        to_return(body: File.new("spec/data/pages/scp-093.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-096.html").
+        to_return(body: File.new("spec/data/pages/scp-096.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-106.html").
+        to_return(body: File.new("spec/data/pages/scp-106.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-173.html").
+        to_return(body: File.new("spec/data/pages/scp-173.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-231.html").
+        to_return(body: File.new("spec/data/pages/scp-231.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-426.html").
+        to_return(body: File.new("spec/data/pages/scp-426.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-682.html").
+        to_return(body: File.new("spec/data/pages/scp-682.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-914.html").
+        to_return(body: File.new("spec/data/pages/scp-914.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-2000.html").
+        to_return(body: File.new("spec/data/pages/scp-2000.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-2317.html").
+        to_return(body: File.new("spec/data/pages/scp-2317.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-2602.html").
+        to_return(body: File.new("spec/data/pages/scp-2602.html"), status: 200)
+    end
+
+    after do
+      WebMock.disable!
+    end
+
+    it "new download when data is nil" do
+      new_data = @engine.download_or_redownload("https://test.crawline.u6k.me/index.html", BlogListTestRule, nil)
+
+      expect(new_data).not_to be nil
+
+      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/index.html")
+    end
+
+    it "new download when redownload? is true (because 2019 year article)" do
+      data = File.new("spec/data/pages/scp-2317.html").read
+
+      new_data = @engine.download_or_redownload("https://test.crawline.u6k.me/pages/scp-2317.html", BlogPageTestRule, data)
+
+      expect(new_data).not_to be nil
+
+      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2317.html")
+    end
+
+    it "not download when redownload? is false (because 2017 year article)" do
+      data = File.new("spec/data/pages/scp-2602.html").read
+
+      new_data = @engine.download_or_redownload("https://test.crawline.u6k.me/pages/scp-2602.html", BlogPageTestRule, data)
+
+      expect(new_data).to be nil
+
+      expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2602.html")
+    end
+  end
+
   class BlogListTestRule < Crawline::BaseRule
     def initialize(url, data)
       @url = url
@@ -327,6 +421,8 @@ describe Crawline::Engine do
     def initialize(url, data)
       @url = url
       @data = data
+
+      parse
     end
 
     def redownload?
