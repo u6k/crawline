@@ -76,4 +76,140 @@ module Crawline
     end
   end
 
+  class Engine
+    def initialize(downloader, repo, rules)
+      raise ArgumentError, "downloader is nil." if downloader.nil?
+      raise ArgumentError, "repo is nil." if repo.nil?
+      raise ArgumentError, "rules is nil." if rules.nil?
+
+      raise TypeError, "downloader is not Crawline::Downloader." if not downloader.is_a?(Crawline::Downloader)
+      raise TypeError, "repo is not Crawline::ResourceRepository." if not repo.is_a?(Crawline::ResourceRepository)
+      rules.each do |url_pattern, rule|
+        raise TypeError, "rules is not Hash<Regexp, Rule>." if not url_pattern.is_a?(Regexp)
+        # FIXME: Check BaseRule subclass ... raise TypeError, "rules is not Hash<Regexp, Rule>." if not rule.is_a?(Crawline::BaseRule)
+      end
+
+      @downloader = downloader
+      @repo = repo
+      @rules = rules
+    end
+
+    def crawl(url)
+      url_list = [url]
+      result = { "success_url_list" => [], "fail_url_list" => [] }
+
+      until url_list.empty? do
+        target_url = url_list.shift
+
+        begin
+          next_links = crawl_impl(target_url)
+
+          if not next_links.nil?
+            next_links.each do |next_link|
+              url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
+            end
+
+            result["success_url_list"].push(target_url)
+          end
+        rescue
+          # FIXME
+          result["fail_url_list"].push(target_url)
+        end
+      end
+
+      result
+    end
+
+    def select_rule(url)
+      rule = @rules.find do |url_pattern, clazz|
+        url_pattern.match(url)
+      end
+
+      (rule.nil? ? nil : rule[1])
+    end
+
+    def get_latest_data_from_storage(url)
+      s3_path = convert_url_to_s3_path(url)
+      data = @repo.get_s3_object(s3_path + ".data")
+    end
+
+    def download_or_redownload(url, rule, data)
+      if data.nil?
+        new_data = @downloader.download_with_get(url)
+      else
+        rule_instance = rule.new(url, data)
+
+        if rule_instance.redownload?
+          new_data = @downloader.download_with_get(url)
+        else
+          nil
+        end
+      end
+    end
+
+    def put_data_to_storage(url, data)
+      s3_path = convert_url_to_s3_path(url)
+      @repo.put_s3_object(s3_path + ".data", data)
+    end
+
+    private
+
+    def convert_url_to_s3_path(url)
+      OpenSSL::Digest::SHA256.hexdigest(url)
+    end
+
+    def crawl_impl(url)
+      # select rule
+      rule = select_rule(url)
+
+      if rule.nil?
+        # TODO
+        raise "Rule not found."
+      end
+
+      # get cache
+      latest_data = get_latest_data_from_storage(url)
+
+      # download
+      new_data = download_or_redownload(url, rule, latest_data)
+
+      if new_data.nil?
+        # TODO
+        return nil
+      end
+
+      # validate
+      rule_instance = rule.new(url, new_data)
+
+      if not rule_instance.valid?
+        # TODO
+        raise "Downloaded data invalid."
+      end
+
+      # save
+      put_data_to_storage(url, new_data)
+
+      # return next links
+      rule_instance.related_links
+    end
+  end
+
+  class BaseRule
+    def redownload?
+      raise "Not implemented."
+    end
+
+    def valid?
+      raise "Not implemented."
+    end
+
+    def related_links
+      raise "Not implemented."
+    end
+
+    def parse
+      raise "Not implemented."
+    end
+  end
+
 end
