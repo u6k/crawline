@@ -407,8 +407,114 @@ describe Crawline::Engine do
   end
 
   describe "#crawl" do
-    it "download all pages" do
-      # FIXME
+    context "first download" do
+      before do
+        # Setup engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+
+        # Setup webmock
+        WebMock.enable!
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/index.html").
+          to_return(body: File.new("spec/data/index.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/page2.html").
+          to_return(body: File.new("spec/data/page2.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/page3.html").
+          to_return(body: File.new("spec/data/page3.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-049.html").
+          to_return(body: File.new("spec/data/pages/scp-049.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-055.html").
+          to_return(body: File.new("spec/data/pages/scp-055.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-087.html").
+          to_return(body: File.new("spec/data/pages/scp-087.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-093.html").
+          to_return(body: File.new("spec/data/pages/scp-093.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-096.html").
+          to_return(body: File.new("spec/data/pages/scp-096.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-106.html").
+          to_return(body: File.new("spec/data/pages/scp-106.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-173.html").
+          to_return(body: File.new("spec/data/pages/scp-173.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-231.html").
+          to_return(body: File.new("spec/data/pages/scp-231.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-426.html").
+          to_return(body: File.new("spec/data/pages/scp-426.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-682.html").
+          to_return(body: File.new("spec/data/pages/scp-682.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-914.html").
+          to_return(body: File.new("spec/data/pages/scp-914.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-2000.html").
+          to_return(body: File.new("spec/data/pages/scp-2000.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-2317.html").
+          to_return(body: File.new("spec/data/pages/scp-2317.html"), status: 200)
+
+        WebMock.stub_request(:get, "https://test.crawline.u6k.me/pages/scp-2602.html").
+          to_return(body: File.new("spec/data/pages/scp-2602.html"), status: 200)
+      end
+
+      after do
+        WebMock.disable!
+      end
+
+      it "download all pages" do
+        result = @engine.crawl("https://test.crawline.u6k.me/index.html")
+
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/index.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/page2.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/page3.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-049.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-055.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-087.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-093.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-096.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-106.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-173.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-231.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-426.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-682.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-914.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2000.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2317.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2602.html")
+
+        expect(result.success_url).to contain_exactly(
+          "https://test.crawline.u6k.me/index.html",
+          "https://test.crawline.u6k.me/page2.html",
+          "https://test.crawline.u6k.me/page3.html",
+          "https://test.crawline.u6k.me/pages/scp-049.html",
+          "https://test.crawline.u6k.me/pages/scp-055.html",
+          "https://test.crawline.u6k.me/pages/scp-087.html",
+          "https://test.crawline.u6k.me/pages/scp-093.html",
+          "https://test.crawline.u6k.me/pages/scp-096.html",
+          "https://test.crawline.u6k.me/pages/scp-106.html",
+          "https://test.crawline.u6k.me/pages/scp-173.html",
+          "https://test.crawline.u6k.me/pages/scp-231.html",
+          "https://test.crawline.u6k.me/pages/scp-426.html",
+          "https://test.crawline.u6k.me/pages/scp-682.html",
+          "https://test.crawline.u6k.me/pages/scp-914.html",
+          "https://test.crawline.u6k.me/pages/scp-2000.html",
+          "https://test.crawline.u6k.me/pages/scp-2317.html",
+          "https://test.crawline.u6k.me/pages/scp-2602.html")
+
+        expect(result.fail_url).to contain_exactly()
+
+        expect(result.data).to match(
+        )
     end
 
     it "redownload some pages" do
