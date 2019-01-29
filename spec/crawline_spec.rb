@@ -512,6 +512,7 @@ describe Crawline::Engine do
         expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2000.html")
         expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2317.html")
         expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2602.html")
+      end
     end
 
     context "all downloaded" do
