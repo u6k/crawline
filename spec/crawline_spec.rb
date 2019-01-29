@@ -705,46 +705,46 @@ describe Crawline::Engine do
       after do
         WebMock.disable!
       end
-    end
 
-    it "download error (4xx, 5xx, timeout)" do
-      result = @engine.crawl("https://test.crawline.u6k.me/index.html")
+      it "download error (4xx, 5xx, timeout)" do
+        result = @engine.crawl("https://test.crawline.u6k.me/index.html")
 
-      expect(result.success_url).to contain_exactly(
-        "https://test.crawline.u6k.me/index.html",
-        "https://test.crawline.u6k.me/page2.html",
-        "https://test.crawline.u6k.me/pages/scp-173.html",
-        "https://test.crawline.u6k.me/pages/scp-087.html",
-        "https://test.crawline.u6k.me/pages/scp-055.html",
-        "https://test.crawline.u6k.me/pages/scp-682.html",
-        "https://test.crawline.u6k.me/pages/scp-093.html",
-        "https://test.crawline.u6k.me/pages/scp-049.html",
-        "https://test.crawline.u6k.me/pages/scp-096.html")
+        expect(result.success_url).to contain_exactly(
+          "https://test.crawline.u6k.me/index.html",
+          "https://test.crawline.u6k.me/page2.html",
+          "https://test.crawline.u6k.me/pages/scp-173.html",
+          "https://test.crawline.u6k.me/pages/scp-087.html",
+          "https://test.crawline.u6k.me/pages/scp-055.html",
+          "https://test.crawline.u6k.me/pages/scp-682.html",
+          "https://test.crawline.u6k.me/pages/scp-093.html",
+          "https://test.crawline.u6k.me/pages/scp-049.html",
+          "https://test.crawline.u6k.me/pages/scp-096.html")
 
-      expect(result.fail_url).to contain_exactly(
-        { "url" => "https://test.crawline.u6k.me/page3.html", "status" => "404" },
-        { "url" => "https://test.crawline.u6k.me/pages/scp-914.html", "status" => "timeout" },
-        { "url" => "https://test.crawline.u6k.me/pages/scp-106.html", "status" => "404" },
-        { "url" => "https://test.crawline.u6k.me/pages/scp-426.html", "status" => "500" })
+        expect(result.fail_url).to contain_exactly(
+          { "url" => "https://test.crawline.u6k.me/page3.html", "status" => "404" },
+          { "url" => "https://test.crawline.u6k.me/pages/scp-914.html", "status" => "timeout" },
+          { "url" => "https://test.crawline.u6k.me/pages/scp-106.html", "status" => "404" },
+          { "url" => "https://test.crawline.u6k.me/pages/scp-426.html", "status" => "500" })
 
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/index.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/page2.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/page3.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-049.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-055.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-087.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-093.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-096.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-106.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-173.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-682.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-914.html")
-      expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2000.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/index.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/page2.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/page3.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-049.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-055.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-087.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-093.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-096.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-106.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-173.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-682.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-914.html")
+        expect(WebMock).to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2000.html")
 
-      expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-231.html")
-      expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-426.html")
-      expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2317.html")
-      expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2602.html")
+        expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-231.html")
+        expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-426.html")
+        expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2317.html")
+        expect(WebMock).not_to have_requested(:get, "https://test.crawline.u6k.me/pages/scp-2602.html")
+      end
     end
   end
 
@@ -794,7 +794,7 @@ describe Crawline::Engine do
           "item_number" => "SCP-087",
           "object_class" => "Euclid",
           "updated" => Time.parse("2018-11-04 14:56")
-        }
+        },
         "scp-093" => {
           "title" => "SCP-093 - 紅海の円盤",
           "item_number" => "SCP-093",
