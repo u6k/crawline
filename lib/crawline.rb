@@ -94,38 +94,30 @@ module Crawline
       @rules = rules
     end
 
-    def crwal(url)
-      # select rule
-      rule = select_rule(url)
+    def crawl(url)
+      url_list = [url]
+      result = { "success_url_list" => [], "fail_url_list" => [] }
 
-      if rule.nil?
-        return
+      until url_list.empty? do
+        target_url = url_list.shift
+
+        begin
+          next_links = crawl_impl(target_url)
+
+          if not next_links.nil?
+            next_links.each do |next_link|
+              url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
+            end
+
+            result["success_url_list"].push(target_url)
+          end
+        rescue
+          # FIXME
+          result["fail_url_list"].push(target_url)
+        end
       end
 
-      # get cache
-      latest_data = get_latest_data_from_storage(url)
-
-      # download
-      new_data = download_or_redownload(url, rule, data)
-
-      if new_data.nil?
-        return
-      end
-
-      # validate
-      rule_instance = rule.new(url, new_data)
-
-      if not rule_instance.valid?
-        return
-      end
-
-      # save
-      put_data_to_storage(url, new_data)
-
-      # crawl next links
-      rule_instance.related_links.each do |url|
-        crawl(url)
-      end
+      result
     end
 
     def select_rule(url)
@@ -139,10 +131,6 @@ module Crawline
     def get_latest_data_from_storage(url)
       s3_path = convert_url_to_s3_path(url)
       data = @repo.get_s3_object(s3_path + ".data")
-    end
-
-    def convert_url_to_s3_path(url)
-      OpenSSL::Digest::SHA256.hexdigest(url)
     end
 
     def download_or_redownload(url, rule, data)
@@ -162,6 +150,47 @@ module Crawline
     def put_data_to_storage(url, data)
       s3_path = convert_url_to_s3_path(url)
       @repo.put_s3_object(s3_path + ".data", data)
+    end
+
+    private
+
+    def convert_url_to_s3_path(url)
+      OpenSSL::Digest::SHA256.hexdigest(url)
+    end
+
+    def crawl_impl(url)
+      # select rule
+      rule = select_rule(url)
+
+      if rule.nil?
+        # TODO
+        raise "Rule not found."
+      end
+
+      # get cache
+      latest_data = get_latest_data_from_storage(url)
+
+      # download
+      new_data = download_or_redownload(url, rule, latest_data)
+
+      if new_data.nil?
+        # TODO
+        return nil
+      end
+
+      # validate
+      rule_instance = rule.new(url, new_data)
+
+      if not rule_instance.valid?
+        # TODO
+        raise "Downloaded data invalid."
+      end
+
+      # save
+      put_data_to_storage(url, new_data)
+
+      # return next links
+      rule_instance.related_links
     end
   end
 
