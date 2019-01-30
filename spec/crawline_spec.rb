@@ -179,10 +179,10 @@ describe Crawline::Engine do
       ENV["AWS_S3_ENDPOINT"],
       ENV["AWS_S3_FORCE_PATH_STYLE"])
 
-    @rules = {
-      /https:\/\/blog.example.com\/index\.html/ => BlogListTestRule,
-      /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestRule,
-      /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestRule,
+    @parsers = {
+      /https:\/\/blog.example.com\/index\.html/ => BlogListTestParser,
+      /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestParser,
+      /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestParser,
     }
 
     # remove all test data
@@ -191,83 +191,83 @@ describe Crawline::Engine do
 
   describe "#initialize" do
     it "raise ArgumentError when downloader is nil" do
-      expect { Crawline::Engine.new(nil, @repo, @rules) }.to raise_error ArgumentError, "downloader is nil."
+      expect { Crawline::Engine.new(nil, @repo, @parsers) }.to raise_error ArgumentError, "downloader is nil."
     end
 
     it "raise TypeError when downloader is not Crawline::Downloader" do
-      expect { Crawline::Engine.new("test", @repo, @rules) }.to raise_error TypeError, "downloader is not Crawline::Downloader."
+      expect { Crawline::Engine.new("test", @repo, @parsers) }.to raise_error TypeError, "downloader is not Crawline::Downloader."
     end
 
     it "raise ArgumentError when repo is nil." do
-      expect { Crawline::Engine.new(@downloader, nil, @rules) }.to raise_error ArgumentError, "repo is nil."
+      expect { Crawline::Engine.new(@downloader, nil, @parsers) }.to raise_error ArgumentError, "repo is nil."
     end
 
     it "raise TypeError when repo is not Crawline::ResourceRepository" do
-      expect { Crawline::Engine.new(@downloader, "test", @rules) }.to raise_error TypeError, "repo is not Crawline::ResourceRepository."
+      expect { Crawline::Engine.new(@downloader, "test", @parsers) }.to raise_error TypeError, "repo is not Crawline::ResourceRepository."
     end
 
-    it "raise ArgumentError when rules is nil" do
-      expect { Crawline::Engine.new(@downloader, @repo, nil) }.to raise_error ArgumentError, "rules is nil."
+    it "raise ArgumentError when parsers is nil" do
+      expect { Crawline::Engine.new(@downloader, @repo, nil) }.to raise_error ArgumentError, "parsers is nil."
     end
 
-    it "raise TypeError when rules is not Hash<Regexp, Rule>" do
-      @rules = {
-        "https://blog.example.com/pages/scp-173.html" => BlogPageTestRule
+    it "raise TypeError when parsers is not Hash<Regexp, Parser>" do
+      @parsers = {
+        "https://blog.example.com/pages/scp-173.html" => BlogPageTestParser
       }
 
-      expect { Crawline::Engine.new(@downloader, @repo, @rules) }.to raise_error TypeError, "rules is not Hash<Regexp, Rule>."
+      expect { Crawline::Engine.new(@downloader, @repo, @parsers) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
     end
   end
 
-  describe "#select_rule" do
+  describe "#select_parser" do
     before do
-      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
     end
 
-    it "match rule (index)" do
+    it "match parser (index)" do
       url = "https://blog.example.com/index.html"
 
-      expect(@engine.select_rule(url)).to eq BlogListTestRule
+      expect(@engine.select_parser(url)).to eq BlogListTestParser
     end
 
-    it "match rule (page list)" do
+    it "match parser (page list)" do
       # page 1
       url = "https://blog.example.com/page1.html"
 
-      expect(@engine.select_rule(url)).to eq BlogListTestRule
+      expect(@engine.select_parser(url)).to eq BlogListTestParser
 
       # page 9
       url = "https://blog.example.com/page9.html"
 
-      expect(@engine.select_rule(url)).to eq BlogListTestRule
+      expect(@engine.select_parser(url)).to eq BlogListTestParser
 
       # page 10
       url = "https://blog.example.com/page10.html"
 
-      expect(@engine.select_rule(url)).to eq BlogListTestRule
+      expect(@engine.select_parser(url)).to eq BlogListTestParser
     end
 
-    it "match rule (page)" do
+    it "match parser (page)" do
       url = "https://blog.example.com/pages/scp-173.html"
 
-      expect(@engine.select_rule(url)).to eq BlogPageTestRule
+      expect(@engine.select_parser(url)).to eq BlogPageTestParser
     end
 
-    it "not match rule" do
+    it "not match parser" do
       # index.html instead of index.htm
       url = "https://blog.example.com/index.htm"
 
-      expect(@engine.select_rule(url)).to be nil
+      expect(@engine.select_parser(url)).to be nil
 
       # page1.html instead of page-1.html
       url = "https://blog.example.com/page-1.html"
 
-      expect(@engine.select_rule(url)).to be nil
+      expect(@engine.select_parser(url)).to be nil
 
       # /pages/ instead of /page/
       url = "https://blog.example.com/page/scp-173.html"
 
-      expect(@engine.select_rule(url)).to be nil
+      expect(@engine.select_parser(url)).to be nil
     end
   end
 
@@ -277,7 +277,7 @@ describe Crawline::Engine do
       @repo.put_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", "test")
 
       # initialize Crawline::Engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
     end
 
     it "exist data" do
@@ -295,7 +295,7 @@ describe Crawline::Engine do
 
   describe "#put_data_to_storage" do
     before do
-      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
     end
 
     it "not exist before put" do
@@ -316,7 +316,7 @@ describe Crawline::Engine do
   describe "#download_or_redownload" do
     before do
       # Setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
 
       # Setup webmock
       WebMock.enable!
@@ -378,7 +378,7 @@ describe Crawline::Engine do
     end
 
     it "new download when data is nil" do
-      new_data = @engine.download_or_redownload("https://blog.example.com/index.html", BlogListTestRule, nil)
+      new_data = @engine.download_or_redownload("https://blog.example.com/index.html", BlogListTestParser, nil)
 
       expect(new_data).not_to be nil
 
@@ -388,7 +388,7 @@ describe Crawline::Engine do
     it "new download when redownload? is true (because 2019 year article)" do
       data = File.new("spec/data/pages/scp-2317.html").read
 
-      new_data = @engine.download_or_redownload("https://blog.example.com/pages/scp-2317.html", BlogPageTestRule, data)
+      new_data = @engine.download_or_redownload("https://blog.example.com/pages/scp-2317.html", BlogPageTestParser, data)
 
       expect(new_data).not_to be nil
 
@@ -398,7 +398,7 @@ describe Crawline::Engine do
     it "not download when redownload? is false (because 2017 year article)" do
       data = File.new("spec/data/pages/scp-2602.html").read
 
-      new_data = @engine.download_or_redownload("https://blog.example.com/pages/scp-2602.html", BlogPageTestRule, data)
+      new_data = @engine.download_or_redownload("https://blog.example.com/pages/scp-2602.html", BlogPageTestParser, data)
 
       expect(new_data).to be nil
 
@@ -410,7 +410,7 @@ describe Crawline::Engine do
     context "first download" do
       before do
         # Setup engine
-        @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
 
         # Setup webmock
         WebMock.enable!
@@ -518,7 +518,7 @@ describe Crawline::Engine do
     context "all downloaded" do
       before do
         # Setup engine
-        @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
 
         # Setup webmock
         WebMock.enable!
@@ -643,7 +643,7 @@ describe Crawline::Engine do
     context "downloading of some pages results with error" do
       before do
         # Setup engine
-        @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
 
         # Setup webmock
         WebMock.enable!
@@ -749,7 +749,7 @@ describe Crawline::Engine do
   describe "#parse" do
     before do
       # Setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @rules)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
 
       # Setup downloaded data
       @engine.put_data_to_storage("https://blog.example.com/index.html", File.new("spec/data/index.html").read)
@@ -873,7 +873,7 @@ describe Crawline::Engine do
     end
   end
 
-  class BlogListTestRule < Crawline::BaseRule
+  class BlogListTestParser < Crawline::BaseParser
     def initialize(url, data)
       @url = url
       @data = data
@@ -915,7 +915,7 @@ describe Crawline::Engine do
     end
   end
 
-  class BlogPageTestRule < Crawline::BaseRule
+  class BlogPageTestParser < Crawline::BaseParser
     def initialize(url, data)
       @url = url
       @data = data

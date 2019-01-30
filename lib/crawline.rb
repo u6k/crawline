@@ -77,21 +77,21 @@ module Crawline
   end
 
   class Engine
-    def initialize(downloader, repo, rules)
+    def initialize(downloader, repo, parsers)
       raise ArgumentError, "downloader is nil." if downloader.nil?
       raise ArgumentError, "repo is nil." if repo.nil?
-      raise ArgumentError, "rules is nil." if rules.nil?
+      raise ArgumentError, "parsers is nil." if parsers.nil?
 
       raise TypeError, "downloader is not Crawline::Downloader." if not downloader.is_a?(Crawline::Downloader)
       raise TypeError, "repo is not Crawline::ResourceRepository." if not repo.is_a?(Crawline::ResourceRepository)
-      rules.each do |url_pattern, rule|
-        raise TypeError, "rules is not Hash<Regexp, Rule>." if not url_pattern.is_a?(Regexp)
-        # FIXME: Check BaseRule subclass ... raise TypeError, "rules is not Hash<Regexp, Rule>." if not rule.is_a?(Crawline::BaseRule)
+      parsers.each do |url_pattern, parser|
+        raise TypeError, "parsers is not Hash<Regexp, Parser>." if not url_pattern.is_a?(Regexp)
+        # FIXME: Check BaseParser subclass ... raise TypeError, "parsers is not Hash<Regexp, Parser>." if not parser.is_a?(Crawline::BaseParser)
       end
 
       @downloader = downloader
       @repo = repo
-      @rules = rules
+      @parsers = parsers
     end
 
     def crawl(url)
@@ -146,12 +146,12 @@ module Crawline
       result["context"]
     end
 
-    def select_rule(url)
-      rule = @rules.find do |url_pattern, clazz|
+    def select_parser(url)
+      parser = @parsers.find do |url_pattern, clazz|
         url_pattern.match(url)
       end
 
-      (rule.nil? ? nil : rule[1])
+      (parser.nil? ? nil : parser[1])
     end
 
     def get_latest_data_from_storage(url)
@@ -159,13 +159,13 @@ module Crawline
       data = @repo.get_s3_object(s3_path + ".data")
     end
 
-    def download_or_redownload(url, rule, data)
+    def download_or_redownload(url, parser, data)
       if data.nil?
         new_data = @downloader.download_with_get(url)
       else
-        rule_instance = rule.new(url, data)
+        parser_instance = parser.new(url, data)
 
-        if rule_instance.redownload?
+        if parser_instance.redownload?
           new_data = @downloader.download_with_get(url)
         else
           nil
@@ -185,19 +185,19 @@ module Crawline
     end
 
     def crawl_impl(url)
-      # select rule
-      rule = select_rule(url)
+      # select parser
+      parser = select_parser(url)
 
-      if rule.nil?
+      if parser.nil?
         # TODO
-        raise "Rule not found."
+        raise "Parser not found."
       end
 
       # get cache
       latest_data = get_latest_data_from_storage(url)
 
       # download
-      new_data = download_or_redownload(url, rule, latest_data)
+      new_data = download_or_redownload(url, parser, latest_data)
 
       if new_data.nil?
         # TODO
@@ -205,9 +205,9 @@ module Crawline
       end
 
       # validate
-      rule_instance = rule.new(url, new_data)
+      parser_instance = parser.new(url, new_data)
 
-      if not rule_instance.valid?
+      if not parser_instance.valid?
         # TODO
         raise "Downloaded data invalid."
       end
@@ -216,31 +216,31 @@ module Crawline
       put_data_to_storage(url, new_data)
 
       # return next links
-      rule_instance.related_links
+      parser_instance.related_links
     end
 
     def parse_impl(url, context)
-      # select rule
-      rule = select_rule(url)
+      # select parser
+      parser = select_parser(url)
 
-      if rule.nil?
+      if parser.nil?
         # TODO
-        raise "Rule not found."
+        raise "Parser not found."
       end
 
       # get cache
       data = get_latest_data_from_storage(url)
 
       # parse
-      rule_instance = rule.new(url, data)
-      rule_instance.parse(context)
+      parser_instance = parser.new(url, data)
+      parser_instance.parse(context)
 
       # return next links
-      rule_instance.related_links
+      parser_instance.related_links
     end
   end
 
-  class BaseRule
+  class BaseParser
     def redownload?
       raise "Not implemented."
     end
