@@ -47,30 +47,50 @@ module Crawline
 
   class ResourceRepository
     def initialize(access_key, secret_key, region, bucket, endpoint, force_path_style)
+      @logger = CrawlineLogger.get_logger
+      @logger.debug("ResourceRepository#initialize: start: access_key=#{access_key}, region=#{region}, bucket=#{bucket}, endpoint=#{endpoint}, force_path_style=#{force_path_style}")
+
       Aws.config.update({
         region: region,
         credentials: Aws::Credentials.new(access_key, secret_key)
       })
       s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
+      @logger.debug("ResourceRepository#initialize: init s3 client")
 
       @bucket = s3.bucket(bucket)
-      @bucket.create if not @bucket.exists?
+      @logger.debug("ResourceRepository#initialize: get bucket")
+
+      if not @bucket.exists?
+        @logger.debug("ResourceRepository#initialize: bucket not exists")
+
+        @bucket.create
+        @logger.debug("ResourceRepository#initialize: bucket created")
+      end
     end
 
     def put_s3_object(file_name, data)
+      @logger.debug("ResourceRepository#put_s3_object: start: file_name=#{file_name}, data.length=#{data.length if not data.nil?}")
+
       obj_original = @bucket.object(file_name + ".latest")
       obj_original.put(body: data)
+      @logger.debug("ResourceRepository#put_s3_object: put original object")
 
       obj_backup = @bucket.object(file_name + "." + Time.now.to_i.to_s)
       obj_backup.put(body: data)
+      @logger.debug("ResourceRepository#put_s3_object: put backup object")
     end
 
     def get_s3_object(file_name)
+      @logger.debug("ResourceRepository#get_s3_object: file_name=#{file_name}")
+
       object = @bucket.object(file_name + ".latest")
 
       begin
+        @logger.debug("ResourceRepository#get_s3_object: getting")
         data = object.get.body.read(object.size)
+        @logger.debug("ResourceRepository#get_s3_object: getted")
       rescue Aws::S3::Errors::NoSuchKey
+        @logger.debug("ResourceRepository#get_s3_object: no such key")
         data = nil
       end
 
@@ -78,10 +98,14 @@ module Crawline
     end
 
     def exists_s3_object?(file_name)
+      @logger.debug("ResourceRepository#exists_s3_object?: file_name=#{file_name}")
+
       (not get_s3_object(file_name).nil?)
     end
 
     def remove_s3_objects
+      @logger.debug("ResourceRepository#remove_s3_objects")
+
       @bucket.objects.batch_delete!
     end
   end
