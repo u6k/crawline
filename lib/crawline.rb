@@ -112,6 +112,9 @@ module Crawline
 
   class Engine
     def initialize(downloader, repo, parsers)
+      @logger = CrawlineLogger.get_logger
+      @logger.debug("Engine#initialize: start: downloader=#{downloader}, repo=#{repo}, parsers=#{parsers}")
+
       raise ArgumentError, "downloader is nil." if downloader.nil?
       raise ArgumentError, "repo is nil." if repo.nil?
       raise ArgumentError, "parsers is nil." if parsers.nil?
@@ -129,11 +132,16 @@ module Crawline
     end
 
     def crawl(url)
+      @logger.debug("Engine#crawl: start: url=#{url}")
+
       url_list = [url]
       result = { "success_url_list" => [], "fail_url_list" => [] }
 
       until url_list.empty? do
+        @logger.debug("Engine#crawl: until url_list.empty?")
+
         target_url = url_list.shift
+        @logger.debug("Engine#crawl: target_url=#{target_url}")
 
         begin
           next_links = crawl_impl(target_url)
@@ -145,8 +153,11 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue
+        rescue => err
           # FIXME
+          @logger.warn("Engine#crawl: crawl error")
+          @logger.warn(err)
+
           result["fail_url_list"].push(target_url)
         end
       end
@@ -155,11 +166,16 @@ module Crawline
     end
 
     def parse(url)
+      @logger.debug("Engine#parse: start: url=#{url}")
+
       url_list = [url]
       result = { "success_url_list" => [], "fail_url_list" => [], "context" => {} }
 
       until url_list.empty? do
+        @logger.debug("Engine#parse: until url_list.empty?")
+
         target_url = url_list.shift
+        @logger.debug("Engine#parse: target_url=#{target_url}")
 
         begin
           next_links = parse_impl(target_url, result["context"])
@@ -171,8 +187,11 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue
+        rescue => err
           # FIXME
+          @logger.warn("Engine#parse: parse error")
+          @logger.warn(err)
+
           result["fail_url_list"].push(target_url)
         end
       end
@@ -181,19 +200,26 @@ module Crawline
     end
 
     def select_parser(url)
+      @logger.debug("Engine#select_parser: start: url=#{url}")
+
       parser = @parsers.find do |url_pattern, clazz|
         url_pattern.match(url)
       end
+      @logger.debug("Engine#select_parser: parser=#{parser}")
 
       (parser.nil? ? nil : parser[1])
     end
 
     def get_latest_data_from_storage(url)
+      @logger.debug("Engine#get_latest_data_from_storage: start: url=#{url}")
+
       s3_path = convert_url_to_s3_path(url)
       data = @repo.get_s3_object(s3_path + ".data")
     end
 
     def download_or_redownload(url, parser, data)
+      @logger.debug("Engine#download_or_redownload: start: url=#{url}, parser=#{parser}, data=#{data.size if not data.nil?}")
+
       if data.nil?
         new_data = @downloader.download_with_get(url)
       else
@@ -208,6 +234,8 @@ module Crawline
     end
 
     def put_data_to_storage(url, data)
+      @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
+
       s3_path = convert_url_to_s3_path(url)
       @repo.put_s3_object(s3_path + ".data", data)
     end
