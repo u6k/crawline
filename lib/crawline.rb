@@ -123,7 +123,7 @@ module Crawline
       raise TypeError, "repo is not Crawline::ResourceRepository." if not repo.is_a?(Crawline::ResourceRepository)
       parsers.each do |url_pattern, parser|
         raise TypeError, "parsers is not Hash<Regexp, Parser>." if not url_pattern.is_a?(Regexp)
-        # FIXME: Check BaseParser subclass ... raise TypeError, "parsers is not Hash<Regexp, Parser>." if not parser.is_a?(Crawline::BaseParser)
+        raise TypeError, "parsers is not Hash<Regexp, Parser>." if not (parser < Crawline::BaseParser)
       end
 
       @downloader = downloader

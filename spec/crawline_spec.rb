@@ -210,9 +210,17 @@ describe Crawline::Engine do
       expect { Crawline::Engine.new(@downloader, @repo, nil) }.to raise_error ArgumentError, "parsers is nil."
     end
 
-    it "raise TypeError when parsers is not Hash<Regexp, Parser>" do
+    it "raise TypeError when parsers is not Hash<Regexp, Parser> - 1" do
       @parsers = {
         "https://blog.example.com/pages/scp-173.html" => BlogPageTestParser
+      }
+
+      expect { Crawline::Engine.new(@downloader, @repo, @parsers) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
+    end
+
+    it "raise TypeError when parsers is not Hash<Regexp, Parser> - 2" do
+      @parsers = {
+        /https:\/\/blog.example.com\/index\.html/ => String
       }
 
       expect { Crawline::Engine.new(@downloader, @repo, @parsers) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
