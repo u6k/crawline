@@ -120,6 +120,32 @@ module Crawline
       result
     end
 
+    def parse(url)
+      url_list = [url]
+      result = { "success_url_list" => [], "fail_url_list" => [], "context" => {} }
+
+      until url_list.empty? do
+        target_url = url_list.shift
+
+        begin
+          next_links = parse_impl(target_url, result["context"])
+
+          if not next_links.nil?
+            next_links.each do |next_link|
+              url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
+            end
+
+            result["success_url_list"].push(target_url)
+          end
+        rescue
+          # FIXME
+          result["fail_url_list"].push(target_url)
+        end
+      end
+
+      result["context"]
+    end
+
     def select_rule(url)
       rule = @rules.find do |url_pattern, clazz|
         url_pattern.match(url)
@@ -192,6 +218,26 @@ module Crawline
       # return next links
       rule_instance.related_links
     end
+
+    def parse_impl(url, context)
+      # select rule
+      rule = select_rule(url)
+
+      if rule.nil?
+        # TODO
+        raise "Rule not found."
+      end
+
+      # get cache
+      data = get_latest_data_from_storage(url)
+
+      # parse
+      rule_instance = rule.new(url, data)
+      rule_instance.parse(context)
+
+      # return next links
+      rule_instance.related_links
+    end
   end
 
   class BaseRule
@@ -207,7 +253,7 @@ module Crawline
       raise "Not implemented."
     end
 
-    def parse
+    def parse(context)
       raise "Not implemented."
     end
   end
