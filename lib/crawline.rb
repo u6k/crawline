@@ -6,10 +6,15 @@ module Crawline
 
   class Downloader
     def initialize(user_agent)
+      @logger = CrawlineLogger.get_logger
+      @logger.debug("Downloader#initialize: start")
+
       @user_agent = user_agent
     end
 
     def download_with_get(url)
+      @logger.debug("Downloader#download_with_get: start: url=#{url}")
+
       uri = URI(url)
 
       req = Net::HTTP::Get.new(uri)
@@ -19,17 +24,22 @@ module Crawline
       http = Net::HTTP.new(uri.hostname, uri.port)
       http.use_ssl = true if url.start_with?("https://")
 
+      @logger.debug("Downloader#download_with_get: request start")
       res = http.start do
         http.request(req)
       end
+      @logger.debug("Downloader#download_with_get: request end: response=#{res}")
 
       case res
       when Net::HTTPSuccess
+        @logger.debug("Downloader#download_with_get: status is success")
         res.body
       when Net::HTTPRedirection
+        @logger.debug("Downloader#download_with_get: status is redirection")
         redirect_url = URI.join(url, res["location"]).to_s
         download_with_get(redirect_url)
       else
+        @logger.debug("Downloader#download_with_get: status is else: code=#{res.code}, #{res.message}")
         raise "#{res.code} #{res.message}"
       end
     end
@@ -37,30 +47,50 @@ module Crawline
 
   class ResourceRepository
     def initialize(access_key, secret_key, region, bucket, endpoint, force_path_style)
+      @logger = CrawlineLogger.get_logger
+      @logger.debug("ResourceRepository#initialize: start: access_key=#{access_key}, region=#{region}, bucket=#{bucket}, endpoint=#{endpoint}, force_path_style=#{force_path_style}")
+
       Aws.config.update({
         region: region,
         credentials: Aws::Credentials.new(access_key, secret_key)
       })
       s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
+      @logger.debug("ResourceRepository#initialize: init s3 client")
 
       @bucket = s3.bucket(bucket)
-      @bucket.create if not @bucket.exists?
+      @logger.debug("ResourceRepository#initialize: get bucket")
+
+      if not @bucket.exists?
+        @logger.debug("ResourceRepository#initialize: bucket not exists")
+
+        @bucket.create
+        @logger.debug("ResourceRepository#initialize: bucket created")
+      end
     end
 
     def put_s3_object(file_name, data)
+      @logger.debug("ResourceRepository#put_s3_object: start: file_name=#{file_name}, data.length=#{data.length if not data.nil?}")
+
       obj_original = @bucket.object(file_name + ".latest")
       obj_original.put(body: data)
+      @logger.debug("ResourceRepository#put_s3_object: put original object")
 
       obj_backup = @bucket.object(file_name + "." + Time.now.to_i.to_s)
       obj_backup.put(body: data)
+      @logger.debug("ResourceRepository#put_s3_object: put backup object")
     end
 
     def get_s3_object(file_name)
+      @logger.debug("ResourceRepository#get_s3_object: file_name=#{file_name}")
+
       object = @bucket.object(file_name + ".latest")
 
       begin
+        @logger.debug("ResourceRepository#get_s3_object: getting")
         data = object.get.body.read(object.size)
+        @logger.debug("ResourceRepository#get_s3_object: getted")
       rescue Aws::S3::Errors::NoSuchKey
+        @logger.debug("ResourceRepository#get_s3_object: no such key")
         data = nil
       end
 
@@ -68,16 +98,23 @@ module Crawline
     end
 
     def exists_s3_object?(file_name)
+      @logger.debug("ResourceRepository#exists_s3_object?: file_name=#{file_name}")
+
       (not get_s3_object(file_name).nil?)
     end
 
     def remove_s3_objects
+      @logger.debug("ResourceRepository#remove_s3_objects")
+
       @bucket.objects.batch_delete!
     end
   end
 
   class Engine
     def initialize(downloader, repo, parsers)
+      @logger = CrawlineLogger.get_logger
+      @logger.debug("Engine#initialize: start: downloader=#{downloader}, repo=#{repo}, parsers=#{parsers}")
+
       raise ArgumentError, "downloader is nil." if downloader.nil?
       raise ArgumentError, "repo is nil." if repo.nil?
       raise ArgumentError, "parsers is nil." if parsers.nil?
@@ -95,11 +132,16 @@ module Crawline
     end
 
     def crawl(url)
+      @logger.debug("Engine#crawl: start: url=#{url}")
+
       url_list = [url]
       result = { "success_url_list" => [], "fail_url_list" => [] }
 
       until url_list.empty? do
+        @logger.debug("Engine#crawl: until url_list.empty?")
+
         target_url = url_list.shift
+        @logger.debug("Engine#crawl: target_url=#{target_url}")
 
         begin
           next_links = crawl_impl(target_url)
@@ -111,8 +153,11 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue
+        rescue => err
           # FIXME
+          @logger.warn("Engine#crawl: crawl error")
+          @logger.warn(err)
+
           result["fail_url_list"].push(target_url)
         end
       end
@@ -121,11 +166,16 @@ module Crawline
     end
 
     def parse(url)
+      @logger.debug("Engine#parse: start: url=#{url}")
+
       url_list = [url]
       result = { "success_url_list" => [], "fail_url_list" => [], "context" => {} }
 
       until url_list.empty? do
+        @logger.debug("Engine#parse: until url_list.empty?")
+
         target_url = url_list.shift
+        @logger.debug("Engine#parse: target_url=#{target_url}")
 
         begin
           next_links = parse_impl(target_url, result["context"])
@@ -137,8 +187,11 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue
+        rescue => err
           # FIXME
+          @logger.warn("Engine#parse: parse error")
+          @logger.warn(err)
+
           result["fail_url_list"].push(target_url)
         end
       end
@@ -147,19 +200,26 @@ module Crawline
     end
 
     def select_parser(url)
+      @logger.debug("Engine#select_parser: start: url=#{url}")
+
       parser = @parsers.find do |url_pattern, clazz|
         url_pattern.match(url)
       end
+      @logger.debug("Engine#select_parser: parser=#{parser}")
 
       (parser.nil? ? nil : parser[1])
     end
 
     def get_latest_data_from_storage(url)
+      @logger.debug("Engine#get_latest_data_from_storage: start: url=#{url}")
+
       s3_path = convert_url_to_s3_path(url)
       data = @repo.get_s3_object(s3_path + ".data")
     end
 
     def download_or_redownload(url, parser, data)
+      @logger.debug("Engine#download_or_redownload: start: url=#{url}, parser=#{parser}, data=#{data.size if not data.nil?}")
+
       if data.nil?
         new_data = @downloader.download_with_get(url)
       else
@@ -174,6 +234,8 @@ module Crawline
     end
 
     def put_data_to_storage(url, data)
+      @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
+
       s3_path = convert_url_to_s3_path(url)
       @repo.put_s3_object(s3_path + ".data", data)
     end
@@ -255,6 +317,20 @@ module Crawline
 
     def parse(context)
       raise "Not implemented."
+    end
+  end
+
+  class CrawlineLogger
+    @@logger = nil
+
+    def self.get_logger
+      if @@logger.nil?
+        @@logger = Logger.new(STDOUT)
+
+        @@logger.level = ENV["CRAWLINE_LOGGER_LEVEL"] if ENV.has_key?("CRAWLINE_LOGGER_LEVEL")
+      end
+
+      @@logger
     end
   end
 
