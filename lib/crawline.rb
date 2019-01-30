@@ -6,10 +6,15 @@ module Crawline
 
   class Downloader
     def initialize(user_agent)
+      @logger = CrawlineLogger.get_logger
+      @logger.debug("Downloader#initialize: start")
+
       @user_agent = user_agent
     end
 
     def download_with_get(url)
+      @logger.debug("Downloader#download_with_get: start: url=#{url}")
+
       uri = URI(url)
 
       req = Net::HTTP::Get.new(uri)
@@ -19,17 +24,22 @@ module Crawline
       http = Net::HTTP.new(uri.hostname, uri.port)
       http.use_ssl = true if url.start_with?("https://")
 
+      @logger.debug("Downloader#download_with_get: request start")
       res = http.start do
         http.request(req)
       end
+      @logger.debug("Downloader#download_with_get: request end: response=#{res}")
 
       case res
       when Net::HTTPSuccess
+        @logger.debug("Downloader#download_with_get: status is success")
         res.body
       when Net::HTTPRedirection
+        @logger.debug("Downloader#download_with_get: status is redirection")
         redirect_url = URI.join(url, res["location"]).to_s
         download_with_get(redirect_url)
       else
+        @logger.debug("Downloader#download_with_get: status is else: code=#{res.code}, #{res.message}")
         raise "#{res.code} #{res.message}"
       end
     end
