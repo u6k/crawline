@@ -258,4 +258,18 @@ module Crawline
     end
   end
 
+  class CrawlineLogger
+    @@logger = nil
+
+    def self.get_logger
+      if @@logger.nil?
+        @@logger = Logger.new(STDOUT)
+
+        @@logger.level = ENV["CRAWLINE_LOGGER_LEVEL"] if ENV.has_key?("CRAWLINE_LOGGER_LEVEL")
+      end
+
+      @@logger
+    end
+  end
+
 end
