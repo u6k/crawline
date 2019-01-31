@@ -40,6 +40,7 @@ module Crawline
         download_with_get(redirect_url)
       else
         @logger.debug("Downloader#download_with_get: status is else: code=#{res.code}, #{res.message}")
+        # TODO
         raise "#{res.code} #{res.message}"
       end
     end
