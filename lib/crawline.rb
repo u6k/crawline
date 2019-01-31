@@ -153,8 +153,7 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue => err
-          # FIXME
+        rescue CrawlineError, Net::OpenTimeout, RuntimeError => err # TODO
           @logger.warn("Engine#crawl: crawl error")
           @logger.warn(err)
 
@@ -187,8 +186,7 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue => err
-          # FIXME
+        rescue CrawlineError => err
           @logger.warn("Engine#parse: parse error")
           @logger.warn(err)
 
