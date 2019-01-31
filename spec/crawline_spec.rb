@@ -227,55 +227,55 @@ describe Crawline::Engine do
     end
   end
 
-  describe "#select_parser" do
+  describe "#find_parser" do
     before do
       @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
     end
 
-    it "match parser (index)" do
+    it "found parser (case index)" do
       url = "https://blog.example.com/index.html"
 
-      expect(@engine.select_parser(url)).to eq BlogListTestParser
+      expect(@engine.find_parser(url)).to eq BlogListTestParser
     end
 
-    it "match parser (page list)" do
+    it "found parser (case page list)" do
       # page 1
       url = "https://blog.example.com/page1.html"
 
-      expect(@engine.select_parser(url)).to eq BlogListTestParser
+      expect(@engine.find_parser(url)).to eq BlogListTestParser
 
       # page 9
       url = "https://blog.example.com/page9.html"
 
-      expect(@engine.select_parser(url)).to eq BlogListTestParser
+      expect(@engine.find_parser(url)).to eq BlogListTestParser
 
       # page 10
       url = "https://blog.example.com/page10.html"
 
-      expect(@engine.select_parser(url)).to eq BlogListTestParser
+      expect(@engine.find_parser(url)).to eq BlogListTestParser
     end
 
-    it "match parser (page)" do
+    it "find parser (case page)" do
       url = "https://blog.example.com/pages/scp-173.html"
 
-      expect(@engine.select_parser(url)).to eq BlogPageTestParser
+      expect(@engine.find_parser(url)).to eq BlogPageTestParser
     end
 
-    it "not match parser" do
+    it "not found parser" do
       # index.html instead of index.htm
       url = "https://blog.example.com/index.htm"
 
-      expect(@engine.select_parser(url)).to be nil
+      expect { @engine.find_parser(url) }.to raise_error Crawline::ParserNotFoundError, "https://blog.example.com/index.htm"
 
       # page1.html instead of page-1.html
       url = "https://blog.example.com/page-1.html"
 
-      expect(@engine.select_parser(url)).to be nil
+      expect { @engine.find_parser(url) }.to raise_error Crawline::ParserNotFoundError, "https://blog.example.com/page-1.html"
 
       # /pages/ instead of /page/
       url = "https://blog.example.com/page/scp-173.html"
 
-      expect(@engine.select_parser(url)).to be nil
+      expect { @engine.find_parser(url) }.to raise_error Crawline::ParserNotFoundError, "https://blog.example.com/page/scp-173.html"
     end
   end
 
