@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2019-01-31
+
+### Added
+
+- [#6750: ルールを定義して、crawlineのエンジンに処理を任せる方式に変更する](https://redmine.u6k.me/issues/6750)
+    - ベース・パーサー、エンジンを実装しました
+- [#6746: デバッグ・ログを出力する](https://redmine.u6k.me/issues/6746)
+    - デフォルトはINFOレベルです
+    - CRAWLINE_LOGGER_LEVEL環境変数でログ・レベルを設定できます
+
 ## [0.2.5] - 2019-01-24
 
 ### Fixed
