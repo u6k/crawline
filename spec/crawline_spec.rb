@@ -1,7 +1,8 @@
 require "spec_helper"
 require "webmock/rspec"
 require "aws-sdk-s3"
-require "nokogiri"
+
+require "test_parser"
 
 describe "Crawline" do
   it "has a version number" do
@@ -881,102 +882,4 @@ describe Crawline::Engine do
     end
   end
 
-  class BlogListTestParser < Crawline::BaseParser
-    def initialize(url, data)
-      @url = url
-      @data = data
-
-      @result = _parse
-    end
-
-    def redownload?
-      true
-    end
-
-    def valid?
-      (not @result["related_links"].empty?)
-    end
-
-    def related_links
-      @result["related_links"]
-    end
-
-    def parse(context)
-    end
-
-    private
-
-    def _parse
-      result = { "related_links" => [] }
-
-      doc = Nokogiri::HTML.parse(@data, nil, "UTF-8")
-
-      doc.xpath("//li[@class='pages_link']/a").each do |a|
-        result["related_links"].push(URI.join(@url, a["href"]).to_s)
-      end
-
-      doc.xpath("//div[@id='pager']/a").each do |a|
-        result["related_links"].push(URI.join(@url, a["href"]).to_s)
-      end
-
-      result
-    end
-  end
-
-  class BlogPageTestParser < Crawline::BaseParser
-    def initialize(url, data)
-      @url = url
-      @data = data
-
-      @result = _parse
-    end
-
-    def redownload?
-      (@result["updated"].year >= 2018)
-    end
-
-    def valid?
-      (not @result["updated"].nil?)
-    end
-
-    def related_links
-      []
-    end
-
-    def parse(context)
-      context[@result["item_number"].downcase] = {
-        "title" => @result["title"],
-        "item_number" => @result["item_number"],
-        "updated" => @result["updated"]
-      }
-
-      context[@result["item_number"].downcase]["object_class"] = @result["object_class"] if @result.has_key?("object_class")
-    end
-
-    private
-
-    def _parse
-      result = {}
-
-      doc = Nokogiri::HTML.parse(@data, nil, "UTF-8")
-
-      doc.xpath("//h1").each do |h1|
-        result["title"] = h1.text
-      end
-
-      doc.xpath("//div[@id='item_number']").each do |div|
-        result["item_number"] = div.text
-      end
-
-      doc.xpath("//div[@id='object_class']").each do |div|
-        result["object_class"] = div.text
-      end
-
-      doc.xpath("//div[@id='updated']").each do |div|
-        result["updated"] = Time.parse(div.text)
-      end
-
-      result
-    end
-  end
 end

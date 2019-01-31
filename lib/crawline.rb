@@ -181,13 +181,11 @@ module Crawline
         begin
           next_links = parse_impl(target_url, result["context"])
 
-          if not next_links.nil?
-            next_links.each do |next_link|
-              url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
-            end
-
-            result["success_url_list"].push(target_url)
+          next_links.each do |next_link|
+            url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
           end
+
+          result["success_url_list"].push(target_url)
         rescue CrawlineError => err
           @logger.warn("Engine#parse: parse error")
           @logger.warn(err)
@@ -276,7 +274,13 @@ module Crawline
       put_data_to_storage(url, new_data)
 
       # return next links
-      parser_instance.related_links
+      related_links = parser_instance.related_links
+
+      if not related_links.nil?
+        related_links
+      else
+        []
+      end
     end
 
     def parse_impl(url, context)
@@ -291,7 +295,13 @@ module Crawline
       parser_instance.parse(context)
 
       # return next links
-      parser_instance.related_links
+      related_links = parser_instance.related_links
+
+      if not related_links.nil?
+        related_links
+      else
+        []
+      end
     end
   end
 
