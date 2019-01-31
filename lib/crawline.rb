@@ -155,7 +155,7 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue CrawlineError, RuntimeError => err # TODO
+        rescue CrawlineError => err
           @logger.warn("Engine#crawl: crawl error")
           @logger.warn(err)
 
@@ -262,7 +262,6 @@ module Crawline
       new_data = download_or_redownload(url, parser, latest_data)
 
       if new_data.nil?
-        # TODO
         return nil
       end
 
@@ -270,8 +269,7 @@ module Crawline
       parser_instance = parser.new(url, new_data)
 
       if not parser_instance.valid?
-        # TODO
-        raise "Downloaded data invalid."
+        raise ParseError.new("Downloaded data invalid.")
       end
 
       # save
@@ -330,9 +328,6 @@ module Crawline
   end
 
   class CrawlineError < StandardError
-    def initialize(message)
-      super(message)
-    end
   end
 
   class ParserNotFoundError < CrawlineError
@@ -343,9 +338,9 @@ module Crawline
   end
 
   class DownloadError < CrawlineError
-    def initialize(message)
-      super(message)
-    end
+  end
+
+  class ParseError < CrawlineError
   end
 
 end
