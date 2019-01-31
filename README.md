@@ -8,7 +8,7 @@
 
 > クローラー向けのクラス・ライブラリ
 
-クローラー向けにクローリング・エンジン、キャッシュ管理、スクレイピング・ルールのベース・クラスを提供します。クローラーは、スクレイピング・ルールをクラスとして実装して、クローリング・エンジンに登録することで、簡単にクローリングを行うことができます。
+クローラー向けにクローリング・エンジン、キャッシュ管理、パーサーのベース・クラスを提供します。パーサーを実装してクローリング・エンジンに登録することで、簡単にクローリングを行うことができます。
 
 __Table of Contents__
 
@@ -16,7 +16,7 @@ __Table of Contents__
 - [Install](#install)
 - [Usage](#usage)
   - [S3をセットアップする](#s3%E3%82%92%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B)
-  - [スクレイピング・ルールを作成する](#%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E3%83%AB%E3%83%BC%E3%83%AB%E3%82%92%E4%BD%9C%E6%88%90%E3%81%99%E3%82%8B)
+  - [パーサーを実装する](#%E3%83%91%E3%83%BC%E3%82%B5%E3%83%BC%E3%82%92%E5%AE%9F%E8%A3%85%E3%81%99%E3%82%8B)
   - [クローリングを開始する](#%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%82%92%E9%96%8B%E5%A7%8B%E3%81%99%E3%82%8B)
 - [Reference](#reference)
   - [コンポーネント構造](#%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E6%A7%8B%E9%80%A0)
@@ -50,19 +50,52 @@ gem 'crawline', :git => 'git://github.com/u6k/crawline.git'
 
 ダウンロードしたWebデータは、S3互換ストレージに格納します。あらかじめ、Amazon S3のバケットを作成して、アクセス・キーなど必要情報を入手してください。
 
-ローカル環境のみで実行したい場合、S3互換ストレージとして[minio](https://www.minio.io/)などを利用することができます。実際、当プロジェクトもテスト実行の場合は`minio`を利用しています。詳細は、[docker-compose.yml](https://github.com/u6k/crawline/blob/master/docker-compose.yml)を参照してください。
+ローカル環境のみで実行したい場合、S3互換ストレージとして[minio](https://www.minio.io/)などを利用することができます。実際、当プロジェクトもテスト実行の場合は`minio`を利用しています。詳細は、[docker-compose.yml](docker-compose.yml)を参照してください。
 
-### スクレイピング・ルールを作成する
+### パーサーを実装する
 
-スクレイピング・ルールの作成は、次のspecを参照してください。
-
-__TODO:__ ルール実装例を記述する
+テスト用に簡単なパーサーを実装してあります。[spec/test_parser.rb](spec/test_parser.rb)を参照してください。
 
 ### クローリングを開始する
 
-クローリングを開始するには、次のように実装してください。
+クローリングは`Crawline::Engine`が行いますので、これを初期化します。
 
-__TODO:__ クローリング開始の実装例を記述する
+`Crawline::Engine`は、`Crawline::Downloader`、`Crawline::ResourceRepository`、そしてパーサー配列を必要とします。
+
+```
+# User-Agentを渡して、Crawline::Downloaderを初期化する。
+downloader = Crawline::Downloader.new("test/0.0.0")
+
+# S3認証情報を渡して、Crawline::ResourceRepositoryを初期化する。
+repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style)
+
+# 正規表現とパーサーの配列を構築する。
+# URLが正規表現にマッチしたパーサーを使用して、ダウンロードしたデータをパースする。
+parsers = {
+  /https:\/\/blog.example.com\/index\.html/ => BlogListTestParser,
+  /https:\/\/blog.example.com\/page[0-9]+\.html/ => BlogListTestParser,
+  /https:\/\/blog.example.com\/pages\/.*\.html/ => BlogPageTestParser,
+}
+
+# Crawline::Engineを初期化する。
+engine = Crawline::Engine.new(downloader, repo, parsers)
+```
+
+クローリングは、`Crawline::Engine#crawl`メソッドにURLを渡すことで行います。
+
+```
+engine.crawl("https://blog.example.com/index.html")
+```
+
+クロールは、実際は「Webからデータをダウンロード」しています。パースはこの後に`Crawline::Engine#parse`メソッドにURLを渡すことで行います。
+
+```
+result = engine.parse("https://blog.example.com/index.html")
+```
+
+パースは、実際は「各パーサーの`parse`メソッドを呼び出し、`context`に設定された値を返す」を行います。
+
+テスト用に簡単なクロール & パースを実装してあります。[spec/crawline_spec.rb](spec/crawline_spec.rb)を参照してください。
 
 ## Reference
 
