@@ -199,15 +199,20 @@ module Crawline
       result["context"]
     end
 
-    def select_parser(url)
-      @logger.debug("Engine#select_parser: start: url=#{url}")
+    def find_parser(url)
+      @logger.debug("Engine#find_parser: start: url=#{url}")
 
       parser = @parsers.find do |url_pattern, clazz|
         url_pattern.match(url)
       end
-      @logger.debug("Engine#select_parser: parser=#{parser}")
+      @logger.debug("Engine#find_parser: parser=#{parser}")
 
-      (parser.nil? ? nil : parser[1])
+      if parser.nil?
+        @logger.debug("Engine#find_parser: parser not found")
+        raise ParserNotFoundError.new(url)
+      end
+
+      parser[1]
     end
 
     def get_latest_data_from_storage(url)
@@ -247,13 +252,8 @@ module Crawline
     end
 
     def crawl_impl(url)
-      # select parser
-      parser = select_parser(url)
-
-      if parser.nil?
-        # TODO
-        raise "Parser not found."
-      end
+      # find parser
+      parser = find_parser(url)
 
       # get cache
       latest_data = get_latest_data_from_storage(url)
@@ -282,13 +282,8 @@ module Crawline
     end
 
     def parse_impl(url, context)
-      # select parser
-      parser = select_parser(url)
-
-      if parser.nil?
-        # TODO
-        raise "Parser not found."
-      end
+      # find parser
+      parser = find_parser(url)
 
       # get cache
       data = get_latest_data_from_storage(url)
@@ -331,6 +326,19 @@ module Crawline
       end
 
       @@logger
+    end
+  end
+
+  class CrawlineError < StandardError
+    def initialize(message)
+      super(message)
+    end
+  end
+
+  class ParserNotFoundError < CrawlineError
+    def initialize(url)
+      super(url)
+      @url = url
     end
   end
 
