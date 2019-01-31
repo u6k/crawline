@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency 'webmock', '~> 3.5', '>= 3.5.1'
   spec.add_development_dependency 'nokogiri', '~> 1.6', '>= 1.6.8'
+  spec.add_development_dependency 'yard'
 
   spec.add_dependency 'aws-sdk-s3', '~> 1.30', '>= 1.30.1'
 end
