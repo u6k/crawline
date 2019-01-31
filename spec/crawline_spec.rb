@@ -86,19 +86,19 @@ describe "Crawline" do
     it "download fail with 4xx" do
       expect {
         @downloader.download_with_get("http://blog.example.com/404.html")
-      }.to raise_error(RuntimeError, "404 Not Found")
+      }.to raise_error(Crawline::DownloadError, "404")
     end
 
     it "download fail with 5xx" do
       expect {
         @downloader.download_with_get("http://blog.example.com/500.html")
-      }.to raise_error(RuntimeError, "500 Internal Server Error")
+      }.to raise_error(Crawline::DownloadError, "500")
     end
 
     it "download fail with timeout" do
       expect {
         @downloader.download_with_get("http://blog.example.com/timeout")
-      }.to raise_error(Net::OpenTimeout)
+      }.to raise_error(Crawline::DownloadError, "timeout")
     end
   end
 

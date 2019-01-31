@@ -27,6 +27,8 @@ module Crawline
       @logger.debug("Downloader#download_with_get: request start")
       res = http.start do
         http.request(req)
+      rescue Net::OpenTimeout
+        raise DownloadError.new("timeout")
       end
       @logger.debug("Downloader#download_with_get: request end: response=#{res}")
 
@@ -40,8 +42,7 @@ module Crawline
         download_with_get(redirect_url)
       else
         @logger.debug("Downloader#download_with_get: status is else: code=#{res.code}, #{res.message}")
-        # TODO
-        raise "#{res.code} #{res.message}"
+        raise DownloadError.new(res.code)
       end
     end
   end
@@ -154,7 +155,7 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue CrawlineError, Net::OpenTimeout, RuntimeError => err # TODO
+        rescue CrawlineError, RuntimeError => err # TODO
           @logger.warn("Engine#crawl: crawl error")
           @logger.warn(err)
 
@@ -338,6 +339,12 @@ module Crawline
     def initialize(url)
       super(url)
       @url = url
+    end
+  end
+
+  class DownloadError < CrawlineError
+    def initialize(message)
+      super(message)
     end
   end
 
