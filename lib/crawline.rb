@@ -113,7 +113,7 @@ module Crawline
   end
 
   class Engine
-    def initialize(downloader, repo, parsers)
+    def initialize(downloader, repo, parsers, interval = 1.0)
       @logger = CrawlineLogger.get_logger
       @logger.debug("Engine#initialize: start: downloader=#{downloader}, repo=#{repo}, parsers=#{parsers}")
 
@@ -131,6 +131,7 @@ module Crawline
       @downloader = downloader
       @repo = repo
       @parsers = parsers
+      @interval = interval
     end
 
     def crawl(url)
@@ -161,6 +162,8 @@ module Crawline
 
           result["fail_url_list"].push(target_url)
         end
+
+        sleep(@interval)
       end
 
       result
