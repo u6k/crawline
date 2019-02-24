@@ -951,7 +951,7 @@ describe Crawline::Engine do
         engine.crawl("https://blog.example.com/index.html")
       end
 
-      expect(time).to be_within(1.0).of(0.5)
+      expect(time).to be_within(0.5).of(1.0)
     end
 
     it "carwl at 1 sec interval" do
@@ -961,7 +961,7 @@ describe Crawline::Engine do
         engine.crawl("https://blog.example.com/index.html")
       end
 
-      expect(time).to be_within(17.0).of(0.5)
+      expect(time).to be_within(0.5).of(18.0)
     end
   end
 
