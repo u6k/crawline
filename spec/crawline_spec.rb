@@ -1,6 +1,7 @@
 require "spec_helper"
 require "webmock/rspec"
 require "aws-sdk-s3"
+require "benchmark"
 
 require "test_parser"
 
@@ -192,23 +193,23 @@ describe Crawline::Engine do
 
   describe "#initialize" do
     it "raise ArgumentError when downloader is nil" do
-      expect { Crawline::Engine.new(nil, @repo, @parsers) }.to raise_error ArgumentError, "downloader is nil."
+      expect { Crawline::Engine.new(nil, @repo, @parsers, 0.001) }.to raise_error ArgumentError, "downloader is nil."
     end
 
     it "raise TypeError when downloader is not Crawline::Downloader" do
-      expect { Crawline::Engine.new("test", @repo, @parsers) }.to raise_error TypeError, "downloader is not Crawline::Downloader."
+      expect { Crawline::Engine.new("test", @repo, @parsers, 0.001) }.to raise_error TypeError, "downloader is not Crawline::Downloader."
     end
 
     it "raise ArgumentError when repo is nil." do
-      expect { Crawline::Engine.new(@downloader, nil, @parsers) }.to raise_error ArgumentError, "repo is nil."
+      expect { Crawline::Engine.new(@downloader, nil, @parsers, 0.001) }.to raise_error ArgumentError, "repo is nil."
     end
 
     it "raise TypeError when repo is not Crawline::ResourceRepository" do
-      expect { Crawline::Engine.new(@downloader, "test", @parsers) }.to raise_error TypeError, "repo is not Crawline::ResourceRepository."
+      expect { Crawline::Engine.new(@downloader, "test", @parsers, 0.001) }.to raise_error TypeError, "repo is not Crawline::ResourceRepository."
     end
 
     it "raise ArgumentError when parsers is nil" do
-      expect { Crawline::Engine.new(@downloader, @repo, nil) }.to raise_error ArgumentError, "parsers is nil."
+      expect { Crawline::Engine.new(@downloader, @repo, nil, 0.001) }.to raise_error ArgumentError, "parsers is nil."
     end
 
     it "raise TypeError when parsers is not Hash<Regexp, Parser> - 1" do
@@ -216,7 +217,7 @@ describe Crawline::Engine do
         "https://blog.example.com/pages/scp-173.html" => BlogPageTestParser
       }
 
-      expect { Crawline::Engine.new(@downloader, @repo, @parsers) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
+      expect { Crawline::Engine.new(@downloader, @repo, @parsers, 0.001) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
     end
 
     it "raise TypeError when parsers is not Hash<Regexp, Parser> - 2" do
@@ -224,13 +225,13 @@ describe Crawline::Engine do
         /https:\/\/blog.example.com\/index\.html/ => String
       }
 
-      expect { Crawline::Engine.new(@downloader, @repo, @parsers) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
+      expect { Crawline::Engine.new(@downloader, @repo, @parsers, 0.001) }.to raise_error TypeError, "parsers is not Hash<Regexp, Parser>."
     end
   end
 
   describe "#find_parser" do
     before do
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
     end
 
     it "found parser (case index)" do
@@ -286,7 +287,7 @@ describe Crawline::Engine do
       @repo.put_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", "test")
 
       # initialize Crawline::Engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
     end
 
     it "exist data" do
@@ -304,7 +305,7 @@ describe Crawline::Engine do
 
   describe "#put_data_to_storage" do
     before do
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
     end
 
     it "not exist before put" do
@@ -325,7 +326,7 @@ describe Crawline::Engine do
   describe "#download_or_redownload" do
     before do
       # Setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
       # Setup webmock
       WebMock.enable!
@@ -419,7 +420,7 @@ describe Crawline::Engine do
     context "first download" do
       before do
         # Setup engine
-        @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
         # Setup webmock
         WebMock.enable!
@@ -527,7 +528,7 @@ describe Crawline::Engine do
     context "all downloaded" do
       before do
         # Setup engine
-        @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
         # Setup webmock
         WebMock.enable!
@@ -652,7 +653,7 @@ describe Crawline::Engine do
     context "downloading of some pages results with error" do
       before do
         # Setup engine
-        @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
         # Setup webmock
         WebMock.enable!
@@ -758,7 +759,7 @@ describe Crawline::Engine do
   describe "#parse" do
     before do
       # Setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
       # Setup downloaded data
       @engine.put_data_to_storage("https://blog.example.com/index.html", File.new("spec/data/index.html").read)
@@ -879,6 +880,88 @@ describe Crawline::Engine do
           "object_class" => "Euclid",
           "updated" => Time.parse("2019-01-06 18:14")
         })
+    end
+  end
+
+  describe "crawl interval" do
+    before do
+      # Setup webmock
+      WebMock.enable!
+
+      WebMock.stub_request(:get, "https://blog.example.com/index.html").
+        to_return(body: File.new("spec/data/index.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/page2.html").
+        to_return(body: File.new("spec/data/page2.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/page3.html").
+        to_return(body: File.new("spec/data/page3.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-049.html").
+        to_return(body: File.new("spec/data/pages/scp-049.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-055.html").
+        to_return(body: File.new("spec/data/pages/scp-055.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-087.html").
+        to_return(body: File.new("spec/data/pages/scp-087.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-093.html").
+        to_return(body: File.new("spec/data/pages/scp-093.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-096.html").
+        to_return(body: File.new("spec/data/pages/scp-096.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-106.html").
+        to_return(body: File.new("spec/data/pages/scp-106.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-173.html").
+        to_return(body: File.new("spec/data/pages/scp-173.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-231.html").
+        to_return(body: File.new("spec/data/pages/scp-231.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-426.html").
+        to_return(body: File.new("spec/data/pages/scp-426.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-682.html").
+        to_return(body: File.new("spec/data/pages/scp-682.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-914.html").
+        to_return(body: File.new("spec/data/pages/scp-914.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2000.html").
+        to_return(body: File.new("spec/data/pages/scp-2000.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2317.html").
+        to_return(body: File.new("spec/data/pages/scp-2317.html"), status: 200)
+
+      WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2602.html").
+        to_return(body: File.new("spec/data/pages/scp-2602.html"), status: 200)
+    end
+
+    after do
+      WebMock.disable!
+    end
+
+    it "crawl at 0.001 sec interval" do
+      engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+
+      time = Benchmark.realtime do
+        engine.crawl("https://blog.example.com/index.html")
+      end
+
+      expect(time).to be_within(0.5).of(1.0)
+    end
+
+    it "carwl at 1 sec interval" do
+      engine = Crawline::Engine.new(@downloader, @repo, @parsers)
+
+      time = Benchmark.realtime do
+        engine.crawl("https://blog.example.com/index.html")
+      end
+
+      expect(time).to be_within(0.5).of(18.0)
     end
   end
 
