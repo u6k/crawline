@@ -405,12 +405,12 @@ describe Crawline::Engine do
       expect(WebMock).to have_requested(:get, "https://blog.example.com/pages/scp-2317.html")
     end
 
-    it "not download when redownload? is false (because 2017 year article)" do
+    it "same data when redownload? is false (because 2017 year article)" do
       data = File.new("spec/data/pages/scp-2602.html").read
 
       new_data = @engine.download_or_redownload("https://blog.example.com/pages/scp-2602.html", BlogPageTestParser, data)
 
-      expect(new_data).to be nil
+      expect(new_data).to be data
 
       expect(WebMock).not_to have_requested(:get, "https://blog.example.com/pages/scp-2602.html")
     end
@@ -623,9 +623,12 @@ describe Crawline::Engine do
           "https://blog.example.com/pages/scp-106.html",
           "https://blog.example.com/pages/scp-173.html",
           "https://blog.example.com/pages/scp-231.html",
+          "https://blog.example.com/pages/scp-426.html",
           "https://blog.example.com/pages/scp-682.html",
+          "https://blog.example.com/pages/scp-914.html",
           "https://blog.example.com/pages/scp-2000.html",
-          "https://blog.example.com/pages/scp-2317.html")
+          "https://blog.example.com/pages/scp-2317.html",
+          "https://blog.example.com/pages/scp-2602.html")
 
         expect(result["fail_url_list"]).to contain_exactly()
 
@@ -951,7 +954,7 @@ describe Crawline::Engine do
         engine.crawl("https://blog.example.com/index.html")
       end
 
-      expect(time).to be_within(0.5).of(1.0)
+      expect(time).to be_within(0.5).of(0.5)
     end
 
     it "carwl at 1 sec interval" do
@@ -961,7 +964,7 @@ describe Crawline::Engine do
         engine.crawl("https://blog.example.com/index.html")
       end
 
-      expect(time).to be_within(0.5).of(18.0)
+      expect(time).to be_within(0.5).of(17.5)
     end
   end
 
