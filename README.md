@@ -1,4 +1,4 @@
-# crawline
+# Crawline _(crawline)_
 
 [![Travis](https://img.shields.io/travis/u6k/crawline.svg)](https://travis-ci.org/u6k/crawline) [![license](https://img.shields.io/github/license/u6k/crawline.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/release/u6k/crawline.svg)](https://github.com/u6k/crawline/releases) [![Website](https://img.shields.io/website-up-down-green-red/https/redmine.u6k.me%2Fprojects%2Fcrawline.svg?label=u6k.Redmine)](https://redmine.u6k.me/projects/crawline) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
@@ -8,16 +8,17 @@
 
 __Table of Contents__
 
-- [Background](#background)
-- [Install](#install)
-- [Usage](#usage)
-    - [S3をセットアップする](#s3%E3%82%92%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E3%81%99%E3%82%8B)
-    - [パーサーを実装する](#%E3%83%91%E3%83%BC%E3%82%B5%E3%83%BC%E3%82%92%E5%AE%9F%E8%A3%85%E3%81%99%E3%82%8B)
-    - [クローリングを開始する](#%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%AA%E3%83%B3%E3%82%B0%E3%82%92%E9%96%8B%E5%A7%8B%E3%81%99%E3%82%8B)
-- [Other](#other)
-- [Maintainer](#maintainer)
-- [Contribute](#contribute)
-- [License](#license)
+- [Background](#Background)
+- [Install](#Install])
+- [Usage](#Usage)
+    - [S3をセットアップする](#S3をセットアップする)
+    - [パーサーを実装する](#パーサーを実装する)
+    - [クローリングを開始する](#クローリングを開始する)
+- [Other](#Other)
+- [API](#API)
+- [Maintainer](#Maintainer)
+- [Contribute](#Contribute)
+- [License](#License)
 
 ## Background
 
@@ -102,6 +103,10 @@ result = engine.parse("https://blog.example.com/index.html")
 - [クローリングで配慮すべきこと](https://redmine.u6k.me/projects/crawline/wiki/%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E5%87%A6%E7%90%86%E3%83%95%E3%83%AD%E3%83%BC)
 - [スクレイピング処理フロー](https://redmine.u6k.me/projects/crawline/wiki/%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E5%87%A6%E7%90%86%E3%83%95%E3%83%AD%E3%83%BC)
 - [参考リンク](https://redmine.u6k.me/projects/crawline/wiki/%E5%8F%82%E8%80%83%E3%83%AA%E3%83%B3%E3%82%AF)
+
+## API
+
+[APIリファレンス](https://u6k.github.io/crawline/) を参照してください。
 
 ## Maintainer
 
