@@ -234,7 +234,7 @@ module Crawline
         if parser_instance.redownload?
           new_data = @downloader.download_with_get(url)
         else
-          nil
+          data
         end
       end
     end
@@ -260,21 +260,17 @@ module Crawline
       latest_data = get_latest_data_from_storage(url)
 
       # download
-      new_data = download_or_redownload(url, parser, latest_data)
-
-      if new_data.nil?
-        return nil
-      end
+      data = download_or_redownload(url, parser, latest_data)
 
       # validate
-      parser_instance = parser.new(url, new_data)
+      parser_instance = parser.new(url, data)
 
       if not parser_instance.valid?
         raise ParseError.new("Downloaded data invalid.")
       end
 
       # save
-      put_data_to_storage(url, new_data)
+      put_data_to_storage(url, data)
 
       # return next links
       related_links = parser_instance.related_links
