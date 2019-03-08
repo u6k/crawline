@@ -162,8 +162,6 @@ module Crawline
 
           result["fail_url_list"].push(target_url)
         end
-
-        sleep(@interval)
       end
 
       result
@@ -227,11 +225,13 @@ module Crawline
       @logger.debug("Engine#download_or_redownload: start: url=#{url}, parser=#{parser}, data=#{data.size if not data.nil?}")
 
       if data.nil?
+        sleep(@interval)
         new_data = @downloader.download_with_get(url)
       else
         parser_instance = parser.new(url, data)
 
         if parser_instance.redownload?
+          sleep(@interval)
           new_data = @downloader.download_with_get(url)
         else
           data
