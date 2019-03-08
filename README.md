@@ -9,7 +9,7 @@
 __Table of Contents__
 
 - [Background](#Background)
-- [Install](#Install])
+- [Install](#Install)
 - [Usage](#Usage)
     - [S3をセットアップする](#S3をセットアップする)
     - [パーサーを実装する](#パーサーを実装する)
