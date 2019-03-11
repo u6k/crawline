@@ -1,3 +1,3 @@
 module Crawline
-  VERSION = "0.7.0-develop"
+  VERSION = "0.7.0"
 end
