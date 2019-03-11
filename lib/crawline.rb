@@ -141,8 +141,6 @@ module Crawline
       result = { "success_url_list" => [], "fail_url_list" => [] }
 
       until url_list.empty? do
-        @logger.debug("Engine#crawl: until url_list.empty?")
-
         target_url = url_list.shift
         @logger.debug("Engine#crawl: target_url=#{target_url}")
 
@@ -162,6 +160,8 @@ module Crawline
 
           result["fail_url_list"].push(target_url)
         end
+
+        @logger.info("Engine#crawl: progress: total=#{url_list.size + result["success_url_list"].size + result["fail_url_list"].size}, success=#{result["success_url_list"].size}, fail=#{result["fail_url_list"].size}, remaining=#{url_list.size}")
       end
 
       result
