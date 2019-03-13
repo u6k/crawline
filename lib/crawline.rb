@@ -154,7 +154,7 @@ module Crawline
 
             result["success_url_list"].push(target_url)
           end
-        rescue CrawlineError => err
+        rescue => err
           @logger.warn("Engine#crawl: crawl error")
           @logger.warn(err)
 
