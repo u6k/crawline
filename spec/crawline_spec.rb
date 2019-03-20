@@ -166,65 +166,108 @@ describe "Crawline" do
   end
 
   describe "ResourceRepository" do
-    before do
-      access_key = ENV["AWS_S3_ACCESS_KEY"]
-      secret_key = ENV["AWS_S3_SECRET_KEY"]
-      region = ENV["AWS_S3_REGION"]
-      bucket = ENV["AWS_S3_BUCKET"]
-      endpoint = ENV["AWS_S3_ENDPOINT"]
-      force_path_style = ENV["AWS_S3_FORCE_PATH_STYLE"]
-
-      # Setup S3 bucket for test
-      Aws.config.update({
-        region: region,
-        credentials: Aws::Credentials.new(access_key, secret_key)
-      })
-      s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
-
-      @bucket = s3.bucket(bucket)
-      @bucket.create if not @bucket.exists?
-
-      # Setup ResourceRepository
-      @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style)
+    context "suffix is nil" do
+      before do
+        access_key = ENV["AWS_S3_ACCESS_KEY"]
+        secret_key = ENV["AWS_S3_SECRET_KEY"]
+        region = ENV["AWS_S3_REGION"]
+        bucket = ENV["AWS_S3_BUCKET"]
+        endpoint = ENV["AWS_S3_ENDPOINT"]
+        force_path_style = ENV["AWS_S3_FORCE_PATH_STYLE"]
+  
+        # Setup S3 bucket for test
+        Aws.config.update({
+          region: region,
+          credentials: Aws::Credentials.new(access_key, secret_key)
+        })
+        s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
+  
+        @bucket = s3.bucket(bucket)
+        @bucket.create if not @bucket.exists?
+  
+        # Setup ResourceRepository
+        @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, nil)
+      end
+  
+      it "put data" do
+        @repo.put_s3_object("put_test.txt", "put test")
+  
+        obj = @bucket.object("put_test.txt.latest")
+        expect(obj.get.body.read(obj.size)).to eq("put test")
+      end
+  
+      it "get data" do
+        obj = @bucket.object("get_test.txt.latest")
+        obj.put(body: "get test")
+  
+        data = @repo.get_s3_object("get_test.txt")
+  
+        expect(data).to eq("get test")
+      end
+  
+      it "get nil when object not found" do
+        obj = @repo.get_s3_object("nil.txt")
+  
+        expect(obj).to eq(nil)
+  
+        @repo.put_s3_object("nil.txt", "test")
+        obj = @repo.get_s3_object("nil.txt")
+  
+        expect(obj).to eq("test")
+      end
+  
+      it "exists s3 object" do
+        expect(@repo.exists_s3_object?("exists.txt")).to eq(false)
+  
+        @repo.put_s3_object("exists.txt", "test")
+  
+        expect(@repo.exists_s3_object?("exists.txt")).to eq(true)
+      end
+  
+      it "remove all data" do
+        @repo.remove_s3_objects
+      end
     end
 
-    it "put data" do
-      @repo.put_s3_object("put_test.txt", "put test")
-
-      obj = @bucket.object("put_test.txt.latest")
-      expect(obj.get.body.read(obj.size)).to eq("put test")
-    end
-
-    it "get data" do
-      obj = @bucket.object("get_test.txt.latest")
-      obj.put(body: "get test")
-
-      data = @repo.get_s3_object("get_test.txt")
-
-      expect(data).to eq("get test")
-    end
-
-    it "get nil when object not found" do
-      obj = @repo.get_s3_object("nil.txt")
-
-      expect(obj).to eq(nil)
-
-      @repo.put_s3_object("nil.txt", "test")
-      obj = @repo.get_s3_object("nil.txt")
-
-      expect(obj).to eq("test")
-    end
-
-    it "exists s3 object" do
-      expect(@repo.exists_s3_object?("exists.txt")).to eq(false)
-
-      @repo.put_s3_object("exists.txt", "test")
-
-      expect(@repo.exists_s3_object?("exists.txt")).to eq(true)
-    end
-
-    it "remove all data" do
-      @repo.remove_s3_objects
+    context "set suffix" do
+      before do
+        access_key = ENV["AWS_S3_ACCESS_KEY"]
+        secret_key = ENV["AWS_S3_SECRET_KEY"]
+        region = ENV["AWS_S3_REGION"]
+        bucket = ENV["AWS_S3_BUCKET"]
+        endpoint = ENV["AWS_S3_ENDPOINT"]
+        force_path_style = ENV["AWS_S3_FORCE_PATH_STYLE"]
+        suffix = ENV["AWS_S3_OBJECT_NAME_SUFFIX"]
+  
+        # Setup S3 bucket for test
+        Aws.config.update({
+          region: region,
+          credentials: Aws::Credentials.new(access_key, secret_key)
+        })
+        s3 = Aws::S3::Resource.new(endpoint: endpoint, force_path_style: force_path_style)
+  
+        @bucket = s3.bucket(bucket)
+        @bucket.create if not @bucket.exists?
+  
+        # Setup ResourceRepository
+        @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, suffix)
+      end
+  
+      it "put data" do
+        @repo.put_s3_object("put_test.txt", "put test")
+  
+        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt.latest")
+        expect(obj.get.body.read(obj.size)).to eq("put test")
+      end
+  
+      it "get data" do
+        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt.latest")
+        obj.put(body: "get test")
+  
+        data = @repo.get_s3_object("get_test.txt")
+  
+        expect(data).to eq("get test")
+      end
     end
   end
 end
@@ -240,7 +283,8 @@ describe Crawline::Engine do
       ENV["AWS_S3_REGION"],
       ENV["AWS_S3_BUCKET"],
       ENV["AWS_S3_ENDPOINT"],
-      ENV["AWS_S3_FORCE_PATH_STYLE"])
+      ENV["AWS_S3_FORCE_PATH_STYLE"],
+      nil)
 
     @parsers = {
       /https:\/\/blog.example.com\/index\.html/ => BlogListTestParser,
