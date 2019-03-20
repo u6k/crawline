@@ -1,6 +1,7 @@
 require "crawline/version"
 
 require "aws-sdk-s3"
+require "json"
 
 module Crawline
 
@@ -35,11 +36,28 @@ module Crawline
       case res
       when Net::HTTPSuccess
         @logger.debug("Downloader#download_with_get: status is success")
-        res.body
+
+        result = {
+          "url" => url,
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => res.body,
+          "downloaded_timestamp" => Time.now().utc()
+        }
+
+        req.each_key { |k| result["request_headers"][k] = req[k] }
+        res.each_key { |k| result["response_headers"][k] = res[k] }
+
+        result
       when Net::HTTPRedirection
         @logger.debug("Downloader#download_with_get: status is redirection")
         redirect_url = URI.join(url, res["location"]).to_s
-        download_with_get(redirect_url)
+        result = download_with_get(redirect_url)
+
+        result["url"] = url
+
+        result
       else
         @logger.debug("Downloader#download_with_get: status is else: code=#{res.code}, #{res.message}")
         raise DownloadError.new(res.code)
@@ -218,11 +236,21 @@ module Crawline
       @logger.debug("Engine#get_latest_data_from_storage: start: url=#{url}")
 
       s3_path = convert_url_to_s3_path(url)
-      data = @repo.get_s3_object(s3_path + ".data")
+      meta_json = @repo.get_s3_object(s3_path + ".meta")
+      response_body = @repo.get_s3_object(s3_path + ".data")
+
+      if not meta_json.nil?
+        data = JSON.parse(meta_json)
+        data["response_body"] = response_body
+
+        data
+      else
+        nil
+      end
     end
 
     def download_or_redownload(url, parser, data)
-      @logger.debug("Engine#download_or_redownload: start: url=#{url}, parser=#{parser}, data=#{data.size if not data.nil?}")
+      @logger.debug("Engine#download_or_redownload: start: url=#{url}, parser=#{parser}, data.nil?=#{data.nil?}")
 
       if data.nil?
         sleep(@interval)
@@ -242,8 +270,12 @@ module Crawline
     def put_data_to_storage(url, data)
       @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
 
+      meta = {}
+      data.select { |k, v| k != "response_body" }.each { |k, v| meta[k] = v }
+
       s3_path = convert_url_to_s3_path(url)
-      @repo.put_s3_object(s3_path + ".data", data)
+      @repo.put_s3_object(s3_path + ".meta", meta.to_json)
+      @repo.put_s3_object(s3_path + ".data", data["response_body"])
     end
 
     private
