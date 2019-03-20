@@ -34,7 +34,7 @@ class BlogListTestParser < Crawline::BaseParser
   def _parse
     @related_links = []
 
-    doc = Nokogiri::HTML.parse(@data, nil, "UTF-8")
+    doc = Nokogiri::HTML.parse(@data["response_body"], nil, "UTF-8")
 
     doc.xpath("//li[@class='pages_link']/a").each do |a|
       @related_links.push(URI.join(@url, a["href"]).to_s)
@@ -87,7 +87,7 @@ class BlogPageTestParser < Crawline::BaseParser
   private
 
   def _parse
-    doc = Nokogiri::HTML.parse(@data, nil, "UTF-8")
+    doc = Nokogiri::HTML.parse(@data["response_body"], nil, "UTF-8")
 
     doc.xpath("//h1").each do |h1|
       @title = h1.text
