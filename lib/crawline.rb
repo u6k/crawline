@@ -281,7 +281,8 @@ module Crawline
     private
 
     def convert_url_to_s3_path(url)
-      OpenSSL::Digest::SHA256.hexdigest(url)
+      path = OpenSSL::Digest::SHA256.hexdigest(url)
+      path = path[0..1] + "/" + path
     end
 
     def crawl_impl(url)

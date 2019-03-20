@@ -345,8 +345,8 @@ describe Crawline::Engine do
   describe "#get_latest_data_from_storage" do
     before do
       # put test data
-      @repo.put_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta", "{\"title\":\"foo\"}")
-      @repo.put_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", "bar")
+      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta", "{\"title\":\"foo\"}")
+      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", "bar")
 
       # initialize Crawline::Engine
       @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
@@ -374,7 +374,7 @@ describe Crawline::Engine do
     end
 
     it "not exist before put" do
-      data = @repo.get_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta")
+      data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta")
 
       expect(data).to be nil
     end
@@ -382,8 +382,8 @@ describe Crawline::Engine do
     it "exist after put" do
       @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", { "title" => "bar", "response_body" => "boo" })
 
-      meta = JSON.parse(@repo.get_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta"))
-      data = @repo.get_s3_object("ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
+      meta = JSON.parse(@repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta"))
+      data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
 
       expect(meta).to match(
         "title" => "bar"
