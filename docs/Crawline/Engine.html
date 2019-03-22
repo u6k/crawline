@@ -476,6 +476,10 @@
       <pre class="lines">
 
 
+250
+251
+252
+253
 254
 255
 256
@@ -488,14 +492,10 @@
 263
 264
 265
-266
-267
-268
-269
-270</pre>
+266</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 254</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 250</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_download_or_redownload'>download_or_redownload</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='id identifier rubyid_parser'>parser</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#download_or_redownload: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>, parser=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_parser'>parser</span><span class='embexpr_end'>}</span><span class='tstring_content'>, data.nil?=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -599,11 +599,7 @@
 245
 246
 247
-248
-249
-250
-251
-252</pre>
+248</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 237</span>
@@ -612,14 +608,10 @@
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#get_latest_data_from_storage: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>=</span> <span class='id identifier rubyid_convert_url_to_s3_path'>convert_url_to_s3_path</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_meta_json'>meta_json</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_get_s3_object'>get_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.meta</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_response_body'>response_body</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_get_s3_object'>get_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.data</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_get_s3_object'>get_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.data</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
-  <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_meta_json'>meta_json</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-    <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_meta_json'>meta_json</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>response_body</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_response_body'>response_body</span>
-
-    <span class='id identifier rubyid_data'>data</span>
+  <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='const'>Marshal</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='const'>Zlib</span><span class='op'>::</span><span class='const'>Inflate</span><span class='period'>.</span><span class='id identifier rubyid_inflate'>inflate</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='kw'>else</span>
     <span class='kw'>nil</span>
   <span class='kw'>end</span>
@@ -728,29 +720,25 @@
       <pre class="lines">
 
 
+268
+269
+270
+271
 272
 273
 274
-275
-276
-277
-278
-279
-280
-281</pre>
+275</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 272</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 268</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_put_data_to_storage'>put_data_to_storage</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#put_data_to_storage: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>, data=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_meta'>meta</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-  <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_k'>k</span> <span class='op'>!=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>response_body</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span> <span class='id identifier rubyid_meta'>meta</span><span class='lbracket'>[</span><span class='id identifier rubyid_k'>k</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_v'>v</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_marshaled_data'>marshaled_data</span> <span class='op'>=</span> <span class='const'>Zlib</span><span class='op'>::</span><span class='const'>Deflate</span><span class='period'>.</span><span class='id identifier rubyid_deflate'>deflate</span><span class='lparen'>(</span><span class='const'>Marshal</span><span class='period'>.</span><span class='id identifier rubyid_dump'>dump</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='int'>9</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>=</span> <span class='id identifier rubyid_convert_url_to_s3_path'>convert_url_to_s3_path</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
-  <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_put_s3_object'>put_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.meta</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_meta'>meta</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='rparen'>)</span>
-  <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_put_s3_object'>put_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.data</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>response_body</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_put_s3_object'>put_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.data</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_marshaled_data'>marshaled_data</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -762,7 +750,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Mar 20 07:10:05 2019 by
+  Generated on Fri Mar 22 02:22:00 2019 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.18 (ruby-2.6.2).
 </div>
