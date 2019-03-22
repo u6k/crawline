@@ -3,6 +3,7 @@ require "webmock/rspec"
 require "aws-sdk-s3"
 require "benchmark"
 require "timecop"
+require "zlib"
 
 require "test_parser"
 
@@ -389,50 +390,82 @@ describe Crawline::Engine do
   describe "#get_latest_data_from_storage" do
     before do
       # put test data
-      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta", "{\"title\":\"foo\"}")
-      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", "bar")
+      @data = {
+        "url" => "https://blog.example.com/pages/scp-173.html",
+        "request_method" => "GET",
+        "request_headers" => {
+          "accept" => "*/*",
+          "user-agent" => "crawline/0.0.0"
+        },
+        "response_headers" => {
+          "content-type" => "text/plain",
+          "content-length" => "123"
+        },
+        "response_body" => File.open("spec/data/pages/scp-173.html").read,
+        "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23)
+      }
+
+      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", Zlib::Deflate.deflate(Marshal.dump(@data)))
 
       # initialize Crawline::Engine
       @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
     end
 
     it "exist data" do
-      data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+      stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
 
-      expect(data).to match(
-        "title" => "foo",
-        "response_body" => "bar"
-      )
+      expect(stored_data).to eq @data
     end
 
     it "not exist data" do
-      data = @engine.get_latest_data_from_storage("scp-173.html")
+      stored_data = @engine.get_latest_data_from_storage("scp-173.html")
 
-      expect(data).to be nil
+      expect(stored_data).to be nil
     end
   end
 
   describe "#put_data_to_storage" do
     before do
+      # setup test data
+      @data = {
+        "url" => "https://blog.example.com/pages/scp-173.html",
+        "request_method" => "GET",
+        "request_headers" => {
+          "accept" => "*/*",
+          "user-agent" => "crawline/0.0.0"
+        },
+        "response_headers" => {
+          "content-type" => "text/plain",
+          "content-length" => "123"
+        },
+        "response_body" => File.open("spec/data/pages/scp-173.html").read,
+        "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23)
+      }
+
+      # setup engine
       @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
     end
 
     it "not exist before put" do
-      data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta")
+      stored_data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
 
-      expect(data).to be nil
+      expect(stored_data).to be nil
     end
 
     it "exist after put" do
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", { "title" => "bar", "response_body" => "boo" })
+      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
 
-      meta = JSON.parse(@repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.meta"))
-      data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
+      stored_data = Marshal.load(Zlib::Inflate.inflate(@repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")))
 
-      expect(meta).to match(
-        "title" => "bar"
-      )
-      expect(data).to eq "boo"
+      expect(stored_data).to eq @data
+    end
+
+    it "is same data, put and get" do
+      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+
+      stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+
+      expect(stored_data).to eq @data
     end
   end
 
