@@ -1,7 +1,7 @@
 require "crawline/version"
 
 require "aws-sdk-s3"
-require "json"
+require "zlib"
 
 module Crawline
 
@@ -238,14 +238,10 @@ module Crawline
       @logger.debug("Engine#get_latest_data_from_storage: start: url=#{url}")
 
       s3_path = convert_url_to_s3_path(url)
-      meta_json = @repo.get_s3_object(s3_path + ".meta")
-      response_body = @repo.get_s3_object(s3_path + ".data")
+      data = @repo.get_s3_object(s3_path + ".data")
 
-      if not meta_json.nil?
-        data = JSON.parse(meta_json)
-        data["response_body"] = response_body
-
-        data
+      if not data.nil?
+        Marshal.load(Zlib::Inflate.inflate(data))
       else
         nil
       end
@@ -272,12 +268,10 @@ module Crawline
     def put_data_to_storage(url, data)
       @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
 
-      meta = {}
-      data.select { |k, v| k != "response_body" }.each { |k, v| meta[k] = v }
+      marshaled_data = Zlib::Deflate.deflate(Marshal.dump(data), 9)
 
       s3_path = convert_url_to_s3_path(url)
-      @repo.put_s3_object(s3_path + ".meta", meta.to_json)
-      @repo.put_s3_object(s3_path + ".data", data["response_body"])
+      @repo.put_s3_object(s3_path + ".data", marshaled_data)
     end
 
     private
