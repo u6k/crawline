@@ -228,6 +228,37 @@ describe "Crawline" do
       it "remove all data" do
         @repo.remove_s3_objects
       end
+
+      it "all latest data" do
+        (0..5).each do |i|
+          @repo.put_s3_object("data_#{i}.txt", "foo #{i}")
+        end
+
+        result = []
+        @repo.list_s3_objects do |obj|
+          result << obj
+        end
+
+        expect(result).to contain_exactly("foo 0", "foo 1", "foo 2", "foo 3", "foo 4", "foo 5")
+      end
+
+      it "all latest data case aws page size over" do
+        (0..1099).each do |i|
+          @repo.put_s3_object("data_#{i}.txt", "bar #{i}")
+        end
+
+        result = []
+        @repo.list_s3_objects do |obj|
+          result << obj
+        end
+
+        expect_result = []
+        (0..1099).each do |i|
+          expect_result << "bar #{i}"
+        end
+
+        expect(result).to match_array(expect_result)
+      end
     end
 
     context "set suffix" do
