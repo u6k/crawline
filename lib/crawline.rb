@@ -102,6 +102,19 @@ module Crawline
       @logger.debug("ResourceRepository#put_s3_object: put backup object")
     end
 
+    def list_s3_objects
+      @logger.debug("ResourceRepository#list_s3_objects: start")
+
+      @bucket.objects.each do |obj|
+        @logger.debug("ResourceRepository#list_s3_objects: object.key=#{obj.key}")
+
+        if obj.key.end_with?(".latest")
+          data = obj.get.body.read(obj.size)
+          yield(data)
+        end
+      end
+    end
+
     def get_s3_object(file_name)
       @logger.debug("ResourceRepository#get_s3_object: file_name=#{file_name}")
 
@@ -129,6 +142,12 @@ module Crawline
       @logger.debug("ResourceRepository#remove_s3_objects")
 
       @bucket.objects.batch_delete!
+    end
+
+    def remove_s3_object(file_name)
+      @logger.debug("ResourceRepository#remove_s3_object: start: file_name=#{file_name}")
+
+      @bucket.objects({prefix: file_name}).batch_delete!
     end
   end
 
