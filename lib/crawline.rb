@@ -91,15 +91,17 @@ module Crawline
     end
 
     def put_s3_object(file_name, data)
-      @logger.debug("ResourceRepository#put_s3_object: start: file_name=#{file_name}, data.length=#{data.length if not data.nil?}")
+      @logger.debug("ResourceRepository#put_s3_object: start: file_name=#{file_name}, data.nil?=#{data.nil?}")
+
+      store_data = Zlib::Deflate.deflate(Marshal.dump(data))
 
       obj_original = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + ".latest")
-      obj_original.put(body: data)
-      @logger.debug("ResourceRepository#put_s3_object: put original object")
+      obj_original.put(body: store_data)
+      @logger.debug("ResourceRepository#put_s3_object: put original object: data.size=#{store_data.size}")
 
       obj_backup = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + "." + Time.now.to_i.to_s)
-      obj_backup.put(body: data)
-      @logger.debug("ResourceRepository#put_s3_object: put backup object")
+      obj_backup.put(body: store_data)
+      @logger.debug("ResourceRepository#put_s3_object: put backup object: data.size=#{store_data.size}")
     end
 
     def list_s3_objects
@@ -109,7 +111,9 @@ module Crawline
         @logger.debug("ResourceRepository#list_s3_objects: object.key=#{obj.key}")
 
         if obj.key.end_with?(".latest")
-          data = obj.get.body.read(obj.size)
+          stored_data = obj.get.body.read(obj.size)
+          data = Marshal.load(Zlib::Inflate.inflate(stored_data))
+
           yield(data)
         end
       end
@@ -122,7 +126,8 @@ module Crawline
 
       begin
         @logger.debug("ResourceRepository#get_s3_object: getting")
-        data = object.get.body.read(object.size)
+        stored_data = object.get.body.read(object.size)
+        data = Marshal.load(Zlib::Inflate.inflate(stored_data))
         @logger.debug("ResourceRepository#get_s3_object: getted")
       rescue Aws::S3::Errors::NoSuchKey
         @logger.debug("ResourceRepository#get_s3_object: no such key")
@@ -260,7 +265,7 @@ module Crawline
       data = @repo.get_s3_object(s3_path + ".data")
 
       if not data.nil?
-        Marshal.load(Zlib::Inflate.inflate(data))
+        data
       else
         nil
       end
@@ -287,10 +292,8 @@ module Crawline
     def put_data_to_storage(url, data)
       @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
 
-      marshaled_data = Zlib::Deflate.deflate(Marshal.dump(data), 9)
-
       s3_path = convert_url_to_s3_path(url)
-      @repo.put_s3_object(s3_path + ".data", marshaled_data)
+      @repo.put_s3_object(s3_path + ".data", data)
     end
 
     private
