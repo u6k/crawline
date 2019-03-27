@@ -198,16 +198,54 @@ describe "Crawline" do
         @repo.put_s3_object("put_test.txt", "put test")
   
         obj = @bucket.object("put_test.txt.latest")
-        expect(obj.get.body.read(obj.size)).to eq("put test")
+        actual_data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+
+        expect(actual_data).to eq("put test")
+      end
+
+      it "put struct data" do
+        data = {
+          "title": "struct test data",
+          "headers": {
+            "aaa": "foo",
+            "bbb": "bar"
+          },
+          "timestamp": Time.now
+        }
+
+        @repo.put_s3_object("put_struct_data.bin", data)
+
+        obj = @bucket.object("put_struct_data.bin.latest")
+        actual_data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+
+        expect(actual_data).to eq data
       end
   
       it "get data" do
         obj = @bucket.object("get_test.txt.latest")
-        obj.put(body: "get test")
+        obj.put(body: Zlib::Deflate.deflate(Marshal.dump("get test")))
   
         data = @repo.get_s3_object("get_test.txt")
   
         expect(data).to eq("get test")
+      end
+
+      it "get struct data" do
+        data = {
+          "title": "STRUCT TEST DATA",
+          "headers": {
+            "AAA": "FOO",
+            "BBB": "BAR"
+          },
+          "timestamp": Time.now
+        }
+
+        obj = @bucket.object("get_struct_data.bin.latest")
+        obj.put(body: Zlib::Deflate.deflate(Marshal.dump(data)))
+
+        actual_data = @repo.get_s3_object("get_struct_data.bin")
+
+        expect(actual_data).to eq data
       end
   
       it "get nil when object not found" do
@@ -337,16 +375,18 @@ describe "Crawline" do
         @repo.put_s3_object("put_test.txt", "put test")
   
         obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt.latest")
-        expect(obj.get.body.read(obj.size)).to eq("put test")
+        data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+
+        expect(data).to eq "put test"
       end
   
       it "get data" do
         obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt.latest")
-        obj.put(body: "get test")
+        obj.put(body: Zlib::Deflate.deflate(Marshal.dump("get test")))
   
         data = @repo.get_s3_object("get_test.txt")
   
-        expect(data).to eq("get test")
+        expect(data).to eq "get test"
       end
     end
   end
@@ -484,7 +524,7 @@ describe Crawline::Engine do
         "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23)
       }
 
-      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", Zlib::Deflate.deflate(Marshal.dump(@data)))
+      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", @data)
 
       # initialize Crawline::Engine
       @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
@@ -534,7 +574,7 @@ describe Crawline::Engine do
     it "exist after put" do
       @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
 
-      stored_data = Marshal.load(Zlib::Inflate.inflate(@repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")))
+      stored_data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
 
       expect(stored_data).to eq @data
     end
