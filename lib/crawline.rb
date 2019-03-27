@@ -143,6 +143,12 @@ module Crawline
 
       @bucket.objects.batch_delete!
     end
+
+    def remove_s3_object(file_name)
+      @logger.debug("ResourceRepository#remove_s3_object: start: file_name=#{file_name}")
+
+      @bucket.objects({prefix: file_name}).batch_delete!
+    end
   end
 
   class Engine
