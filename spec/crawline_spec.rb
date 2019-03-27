@@ -189,6 +189,10 @@ describe "Crawline" do
         # Setup ResourceRepository
         @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, nil)
       end
+
+      after do
+        @repo.remove_s3_objects
+      end
   
       it "put data" do
         @repo.put_s3_object("put_test.txt", "put test")
@@ -224,9 +228,84 @@ describe "Crawline" do
   
         expect(@repo.exists_s3_object?("exists.txt")).to eq(true)
       end
+
+      it "remove s3 object" do
+        @repo.put_s3_object("data_0.txt", "foo 0")
+        @repo.put_s3_object("data_1.txt", "foo 1")
+        @repo.put_s3_object("data_2.txt", "foo 2")
+
+        result = []
+        @repo.list_s3_objects do |obj|
+          result << obj
+        end
+
+        expect(@bucket.objects.count).to eq 6
+        expect(result).to contain_exactly("foo 0", "foo 1", "foo 2")
+
+        @repo.remove_s3_object("data_1.txt")
+
+        result = []
+        @repo.list_s3_objects do |obj|
+          result << obj
+        end
+
+        expect(@bucket.objects.count).to eq 4
+        expect(result).to contain_exactly("foo 0", "foo 2")
+      end
   
       it "remove all data" do
+        @repo.put_s3_object("data_0.txt", "foo 0")
+        @repo.put_s3_object("data_1.txt", "foo 1")
+        @repo.put_s3_object("data_2.txt", "foo 2")
+
+        expect(@bucket.objects.count).to eq 6
+
         @repo.remove_s3_objects
+
+        expect(@bucket.objects.count).to eq 0
+      end
+
+      it "remove all data case aws page size over" do
+        (0..1099).each do |i|
+          @repo.put_s3_object("data_#{i}.txt", "foo #{i}")
+        end
+
+        expect(@bucket.objects.count).to eq 2200
+
+        @repo.remove_s3_objects
+
+        expect(@bucket.objects.count).to eq 0
+      end
+
+      it "all latest data" do
+        (0..5).each do |i|
+          @repo.put_s3_object("data_#{i}.txt", "foo #{i}")
+        end
+
+        result = []
+        @repo.list_s3_objects do |obj|
+          result << obj
+        end
+
+        expect(result).to contain_exactly("foo 0", "foo 1", "foo 2", "foo 3", "foo 4", "foo 5")
+      end
+
+      it "all latest data case aws page size over" do
+        (0..1099).each do |i|
+          @repo.put_s3_object("data_#{i}.txt", "bar #{i}")
+        end
+
+        result = []
+        @repo.list_s3_objects do |obj|
+          result << obj
+        end
+
+        expect_result = []
+        (0..1099).each do |i|
+          expect_result << "bar #{i}"
+        end
+
+        expect(result).to match_array(expect_result)
       end
     end
 

@@ -11,7 +11,7 @@ services:
       - "AWS_S3_ENDPOINT=http://s3:9000"
       - "AWS_S3_FORCE_PATH_STYLE=true"
       - "AWS_S3_OBJECT_NAME_SUFFIX=test"
-      - "CRAWLINE_LOGGER_LEVEL=DEBUG" # INFO when Comment outted
+      - "CRAWLINE_LOGGER_LEVEL=WARN"
     volumes:
       - ".:/var/myapp"
     depends_on:
