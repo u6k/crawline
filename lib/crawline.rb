@@ -340,6 +340,10 @@ module Crawline
       # get cache
       data = get_latest_data_from_storage(url)
 
+      if data.nil?
+        raise ParseError.new("Cache data not found: url=#{url}")
+      end
+
       # parse
       parser_instance = parser.new(url, data)
       parser_instance.parse(context)
