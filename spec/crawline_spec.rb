@@ -1141,231 +1141,254 @@ describe Crawline::Engine do
   end
 
   describe "#parse" do
-    before do
-      # Setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
-
-      # Setup downloaded data
-      @engine.put_data_to_storage("https://blog.example.com/index.html", {
-        "url" => "https://blog.example.com/index.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/index.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/page2.html", {
-        "url" => "https://blog.example.com/page2.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/page2.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/page3.html", {
-        "url" => "https://blog.example.com/page3.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/page3.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-049.html", {
-        "url" => "https://blog.example.com/pages/scp-049.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-049.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-055.html", {
-        "url" => "https://blog.example.com/pages/scp-055.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-055.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-087.html", {
-        "url" => "https://blog.example.com/pages/scp-087.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-087.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-093.html", {
-        "url" => "https://blog.example.com/pages/scp-093.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-093.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-096.html", {
-        "url" => "https://blog.example.com/pages/scp-096.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-096.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-106.html", {
-        "url" => "https://blog.example.com/pages/scp-106.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-106.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", {
-        "url" => "https://blog.example.com/pages/scp-173.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-173.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-231.html", {
-        "url" => "https://blog.example.com/pages/scp-231.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-231.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-426.html", {
-        "url" => "https://blog.example.com/pages/scp-426.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-426.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-682.html", {
-        "url" => "https://blog.example.com/pages/scp-682.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-682.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-914.html", {
-        "url" => "https://blog.example.com/pages/scp-914.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-914.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-2000.html", {
-        "url" => "https://blog.example.com/pages/scp-2000.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-2000.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-2317.html", {
-        "url" => "https://blog.example.com/pages/scp-2317.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-2317.html").read,
-        "downloaded_timestamp" => Time.now.utc})
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-2602.html", {
-        "url" => "https://blog.example.com/pages/scp-2602.html",
-        "request_method" => "GET",
-        "request_headers" => {},
-        "response_headers" => {},
-        "response_body" => File.new("spec/data/pages/scp-2602.html").read,
-        "downloaded_timestamp" => Time.now.utc})
+    context "cache complete" do
+      before do
+        # Setup engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+  
+        # Setup downloaded data
+        @engine.put_data_to_storage("https://blog.example.com/index.html", {
+          "url" => "https://blog.example.com/index.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/index.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/page2.html", {
+          "url" => "https://blog.example.com/page2.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/page2.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/page3.html", {
+          "url" => "https://blog.example.com/page3.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/page3.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-049.html", {
+          "url" => "https://blog.example.com/pages/scp-049.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-049.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-055.html", {
+          "url" => "https://blog.example.com/pages/scp-055.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-055.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-087.html", {
+          "url" => "https://blog.example.com/pages/scp-087.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-087.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-093.html", {
+          "url" => "https://blog.example.com/pages/scp-093.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-093.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-096.html", {
+          "url" => "https://blog.example.com/pages/scp-096.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-096.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-106.html", {
+          "url" => "https://blog.example.com/pages/scp-106.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-106.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", {
+          "url" => "https://blog.example.com/pages/scp-173.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-173.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-231.html", {
+          "url" => "https://blog.example.com/pages/scp-231.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-231.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-426.html", {
+          "url" => "https://blog.example.com/pages/scp-426.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-426.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-682.html", {
+          "url" => "https://blog.example.com/pages/scp-682.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-682.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-914.html", {
+          "url" => "https://blog.example.com/pages/scp-914.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-914.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-2000.html", {
+          "url" => "https://blog.example.com/pages/scp-2000.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-2000.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-2317.html", {
+          "url" => "https://blog.example.com/pages/scp-2317.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-2317.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-2602.html", {
+          "url" => "https://blog.example.com/pages/scp-2602.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-2602.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+      end
+  
+      it "parse all pages" do
+        data = @engine.parse("https://blog.example.com/index.html")
+  
+        expect(data).to match(
+          "scp-049" => {
+            "title" => "SCP-049 - ペスト医師",
+            "item_number" => "SCP-049",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2018-12-29 12:23")
+          },
+          "scp-055" => {
+            "title" => "SCP-055 - [正体不明]",
+            "item_number" => "SCP-055",
+            "object_class" => "Keter",
+            "updated" => Time.parse("2018-10-14 12:49")
+          },
+          "scp-087" => {
+            "title" => "SCP-087 - 吹き抜けた階段",
+            "item_number" => "SCP-087",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2018-11-04 14:56")
+          },
+          "scp-093" => {
+            "title" => "SCP-093 - 紅海の円盤",
+            "item_number" => "SCP-093",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2018-05-12 01:41")
+          },
+          "scp-096" => {
+            "title" => "SCP-096 - \"シャイガイ\"",
+            "item_number" => "SCP-096",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2018-12-17 01:24")
+          },
+          "scp-106" => {
+            "title" => "SCP-106 - オールドマン",
+            "item_number" => "SCP-106",
+            "object_class" => "Keter",
+            "updated" => Time.parse("2019-01-18 05:39")
+          },
+          "scp-173" => {
+            "title" => "SCP-173 - 彫刻 - オリジナル",
+            "item_number" => "SCP-173",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2019-01-06 18:14")
+          },
+          "scp-231" => {
+            "title" => "SCP-231 - 特別職員要件",
+            "item_number" => "SCP-231",
+            "object_class" => "Keter",
+            "updated" => Time.parse("2018-12-29 12:29")
+          },
+          "scp-426" => {
+            "title" => "SCP-426 - 私はトースター",
+            "item_number" => "SCP-426",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2017-06-04 21:53")
+          },
+          "scp-682" => {
+            "title" => "SCP-682 - 不死身の爬虫類",
+            "item_number" => "SCP-682",
+            "object_class" => "Keter",
+            "updated" => Time.parse("2018-11-11 20:07")
+          },
+          "scp-914" => {
+            "title" => "SCP-914 - ぜんまい仕掛け",
+            "item_number" => "SCP-914",
+            "object_class" => "Safe",
+            "updated" => Time.parse("2017-12-01 18:01")
+          },
+          "scp-2000" => {
+            "title" => "SCP-2000 - 機械仕掛けの神",
+            "item_number" => "SCP-2000",
+            "object_class" => "Thaumiel",
+            "updated" => Time.parse("2018-09-25 16:39")
+          },
+          "scp-2317" => {
+            "title" => "SCP-2317 - 異世界への扉",
+            "item_number" => "SCP-2317",
+            "updated" => Time.parse("2019-01-18 23:53")
+          },
+          "scp-2602" => {
+            "title" => "かつて図書館だったSCP-2602",
+            "item_number" => "SCP-2602",
+            "object_class" => "Former",
+            "updated" => Time.parse("2017-05-16 15:27")
+          })
+      end
+  
+      it "parse a page" do
+        data = @engine.parse("https://blog.example.com/pages/scp-173.html")
+  
+        expect(data).to match(
+          "scp-173" => {
+            "title" => "SCP-173 - 彫刻 - オリジナル",
+            "item_number" => "SCP-173",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2019-01-06 18:14")
+          })
+      end
     end
 
-    it "parse all pages" do
-      data = @engine.parse("https://blog.example.com/index.html")
+    context "cache incomplete" do
+      before do
+        # Setup engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
-      expect(data).to match(
-        "scp-049" => {
-          "title" => "SCP-049 - ペスト医師",
-          "item_number" => "SCP-049",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2018-12-29 12:23")
-        },
-        "scp-055" => {
-          "title" => "SCP-055 - [正体不明]",
-          "item_number" => "SCP-055",
-          "object_class" => "Keter",
-          "updated" => Time.parse("2018-10-14 12:49")
-        },
-        "scp-087" => {
-          "title" => "SCP-087 - 吹き抜けた階段",
-          "item_number" => "SCP-087",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2018-11-04 14:56")
-        },
-        "scp-093" => {
-          "title" => "SCP-093 - 紅海の円盤",
-          "item_number" => "SCP-093",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2018-05-12 01:41")
-        },
-        "scp-096" => {
-          "title" => "SCP-096 - \"シャイガイ\"",
-          "item_number" => "SCP-096",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2018-12-17 01:24")
-        },
-        "scp-106" => {
-          "title" => "SCP-106 - オールドマン",
-          "item_number" => "SCP-106",
-          "object_class" => "Keter",
-          "updated" => Time.parse("2019-01-18 05:39")
-        },
-        "scp-173" => {
-          "title" => "SCP-173 - 彫刻 - オリジナル",
-          "item_number" => "SCP-173",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2019-01-06 18:14")
-        },
-        "scp-231" => {
-          "title" => "SCP-231 - 特別職員要件",
-          "item_number" => "SCP-231",
-          "object_class" => "Keter",
-          "updated" => Time.parse("2018-12-29 12:29")
-        },
-        "scp-426" => {
-          "title" => "SCP-426 - 私はトースター",
-          "item_number" => "SCP-426",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2017-06-04 21:53")
-        },
-        "scp-682" => {
-          "title" => "SCP-682 - 不死身の爬虫類",
-          "item_number" => "SCP-682",
-          "object_class" => "Keter",
-          "updated" => Time.parse("2018-11-11 20:07")
-        },
-        "scp-914" => {
-          "title" => "SCP-914 - ぜんまい仕掛け",
-          "item_number" => "SCP-914",
-          "object_class" => "Safe",
-          "updated" => Time.parse("2017-12-01 18:01")
-        },
-        "scp-2000" => {
-          "title" => "SCP-2000 - 機械仕掛けの神",
-          "item_number" => "SCP-2000",
-          "object_class" => "Thaumiel",
-          "updated" => Time.parse("2018-09-25 16:39")
-        },
-        "scp-2317" => {
-          "title" => "SCP-2317 - 異世界への扉",
-          "item_number" => "SCP-2317",
-          "updated" => Time.parse("2019-01-18 23:53")
-        },
-        "scp-2602" => {
-          "title" => "かつて図書館だったSCP-2602",
-          "item_number" => "SCP-2602",
-          "object_class" => "Former",
-          "updated" => Time.parse("2017-05-16 15:27")
-        })
-    end
+        @engine.put_data_to_storage("https://blog.example.com/index.html", {
+          "url" => "https://blog.example.com/index.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/index.html").read,
+          "downloaded_timestamp" => Time.now.utc})
+      end
 
-    it "parse a page" do
-      data = @engine.parse("https://blog.example.com/pages/scp-173.html")
+      it "parse all pages" do
+        data = @engine.parse("https://blog.example.com/index.html")
 
-      expect(data).to match(
-        "scp-173" => {
-          "title" => "SCP-173 - 彫刻 - オリジナル",
-          "item_number" => "SCP-173",
-          "object_class" => "Euclid",
-          "updated" => Time.parse("2019-01-06 18:14")
-        })
+        expect(data).to be_empty
+      end
     end
   end
 
