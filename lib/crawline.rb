@@ -275,15 +275,21 @@ module Crawline
       @logger.debug("Engine#download_or_redownload: start: url=#{url}, parser=#{parser}, data.nil?=#{data.nil?}")
 
       if data.nil?
+        @logger.debug("Engine#download_or_redownload: download")
+
         sleep(@interval)
         new_data = @downloader.download_with_get(url)
       else
         parser_instance = parser.new(url, data)
 
         if parser_instance.redownload?
+          @logger.debug("Engine#download_or_redownload: redownload")
+
           sleep(@interval)
           new_data = @downloader.download_with_get(url)
         else
+          @logger.debug("Engine#download_or_redownload: skip")
+
           data
         end
       end
