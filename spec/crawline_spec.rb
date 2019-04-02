@@ -1474,4 +1474,112 @@ describe Crawline::Engine do
     end
   end
 
+  describe "#check_cache_exists" do
+    before do
+      # Setup engine
+      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+  
+    end
+
+    context "complete cache" do
+      before do
+        # Setup webmock
+        WebMock.enable!
+
+        WebMock.stub_request(:get, "https://blog.example.com/index.html").
+          to_return(body: File.new("spec/data/index.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/page2.html").
+          to_return(body: File.new("spec/data/page2.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/page3.html").
+          to_return(body: File.new("spec/data/page3.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-049.html").
+          to_return(body: File.new("spec/data/pages/scp-049.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-055.html").
+          to_return(body: File.new("spec/data/pages/scp-055.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-087.html").
+          to_return(body: File.new("spec/data/pages/scp-087.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-093.html").
+          to_return(body: File.new("spec/data/pages/scp-093.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-096.html").
+          to_return(body: File.new("spec/data/pages/scp-096.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-106.html").
+          to_return(body: File.new("spec/data/pages/scp-106.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-173.html").
+          to_return(body: File.new("spec/data/pages/scp-173.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-231.html").
+          to_return(body: File.new("spec/data/pages/scp-231.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-426.html").
+          to_return(body: File.new("spec/data/pages/scp-426.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-682.html").
+          to_return(body: File.new("spec/data/pages/scp-682.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-914.html").
+          to_return(body: File.new("spec/data/pages/scp-914.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2000.html").
+          to_return(body: File.new("spec/data/pages/scp-2000.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2317.html").
+          to_return(body: File.new("spec/data/pages/scp-2317.html"), status: 200)
+        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2602.html").
+          to_return(body: File.new("spec/data/pages/scp-2602.html"), status: 200)
+      end
+
+      after do
+        WebMock.disable!
+      end
+
+      it "is all found" do
+        @engine.crawl("https://blog.example.com/index.html")
+        result = @engine.list_cache_state("https://blog.example.com/index.html")
+
+        expect(result).to match(
+          "https://blog.example.com/index.html" => "found",
+          "https://blog.example.com/page2.html" => "found",
+          "https://blog.example.com/page3.html" => "found",
+          "https://blog.example.com/pages/scp-049.html" => "found",
+          "https://blog.example.com/pages/scp-055.html" => "found",
+          "https://blog.example.com/pages/scp-087.html" => "found",
+          "https://blog.example.com/pages/scp-093.html" => "found",
+          "https://blog.example.com/pages/scp-096.html" => "found",
+          "https://blog.example.com/pages/scp-106.html" => "found",
+          "https://blog.example.com/pages/scp-173.html" => "found",
+          "https://blog.example.com/pages/scp-231.html" => "found",
+          "https://blog.example.com/pages/scp-426.html" => "found",
+          "https://blog.example.com/pages/scp-682.html" => "found",
+          "https://blog.example.com/pages/scp-914.html" => "found",
+          "https://blog.example.com/pages/scp-2000.html" => "found",
+          "https://blog.example.com/pages/scp-2317.html" => "found",
+          "https://blog.example.com/pages/scp-2602.html" => "found")
+      end
+    end
+
+    context "incomplete cache" do
+      before do
+        # Setup webmock
+        WebMock.enable!
+
+        WebMock.stub_request(:get, /^https:\/\/blog\.example\.com\/.*$/).
+          to_return(status: 404)
+        WebMock.stub_request(:get, "https://blog.example.com/index.html").
+          to_return(body: File.new("spec/data/index.html"), status: 200)
+      end
+
+      after do
+        WebMock.disable!
+      end
+
+      it "is 1 found, other not found" do
+        @engine.crawl("https://blog.example.com/index.html")
+        result = @engine.list_cache_state("https://blog.example.com/index.html")
+
+        expect(result).to match(
+          "https://blog.example.com/index.html" => "found",
+          "https://blog.example.com/page2.html" => "not found",
+          "https://blog.example.com/pages/scp-055.html" => "not found",
+          "https://blog.example.com/pages/scp-087.html" => "not found",
+          "https://blog.example.com/pages/scp-093.html" => "not found",
+          "https://blog.example.com/pages/scp-173.html" => "not found",
+          "https://blog.example.com/pages/scp-682.html" => "not found")
+      end
+    end
+  end
 end
+

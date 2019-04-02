@@ -302,6 +302,45 @@ module Crawline
       @repo.put_s3_object(s3_path + ".data", data)
     end
 
+    def list_cache_state(url)
+      url_list = [url]
+      result = {}
+
+      until url_list.empty? do
+        target_url = url_list.shift
+
+        begin
+          data = get_latest_data_from_storage(target_url)
+
+          if data.nil?
+            result[target_url] = "not found"
+          else
+            parser = find_parser(target_url)
+            parser_instance = parser.new(target_url, data)
+            if parser_instance.nil?
+              result[target_utl] = "parser not found"
+            else
+              if not parser_instance.valid?
+                result[target_url] = "invalid"
+              else
+                result[target_url] = "found"
+
+                if not parser_instance.related_links.nil?
+                  parser_instance.related_links.each do |next_link|
+                    url_list << next_link if result[next_link].nil?
+                  end
+                end
+              end
+            end
+          end
+        rescue => err
+          @logger.warn(err)
+        end
+      end
+
+      result
+    end
+
     private
 
     def convert_url_to_s3_path(url)
