@@ -6,7 +6,7 @@
 <title>
   Class: Crawline::Engine
   
-    &mdash; Documentation by YARD 0.9.18
+    &mdash; Documentation by YARD 0.9.19
   
 </title>
 
@@ -224,6 +224,28 @@
     <span class="summary_desc"><div class='inline'>
 <p>A new instance of Engine.</p>
 </div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#list_cache_state-instance_method" title="#list_cache_state (instance method)">#<strong>list_cache_state</strong>(url)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
   
 </li>
 
@@ -634,6 +656,106 @@
 </div>
     
       <div class="method_details ">
+  <h3 class="signature " id="list_cache_state-instance_method">
+  
+    #<strong>list_cache_state</strong>(url)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 305</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_list_cache_state'>list_cache_state</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_url_list'>url_list</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_url'>url</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+
+  <span class='kw'>until</span> <span class='id identifier rubyid_url_list'>url_list</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_target_url'>target_url</span> <span class='op'>=</span> <span class='id identifier rubyid_url_list'>url_list</span><span class='period'>.</span><span class='id identifier rubyid_shift'>shift</span>
+
+    <span class='kw'>begin</span>
+      <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='id identifier rubyid_get_latest_data_from_storage'>get_latest_data_from_storage</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rparen'>)</span>
+
+      <span class='kw'>if</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+        <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>not found</span><span class='tstring_end'>&quot;</span></span>
+      <span class='kw'>else</span>
+        <span class='id identifier rubyid_parser'>parser</span> <span class='op'>=</span> <span class='id identifier rubyid_find_parser'>find_parser</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_parser_instance'>parser_instance</span> <span class='op'>=</span> <span class='id identifier rubyid_parser'>parser</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
+        <span class='kw'>if</span> <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+          <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='id identifier rubyid_target_utl'>target_utl</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>parser not found</span><span class='tstring_end'>&quot;</span></span>
+        <span class='kw'>else</span>
+          <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='period'>.</span><span class='id identifier rubyid_valid?'>valid?</span>
+            <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>invalid</span><span class='tstring_end'>&quot;</span></span>
+          <span class='kw'>else</span>
+            <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>found</span><span class='tstring_end'>&quot;</span></span>
+
+            <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='period'>.</span><span class='id identifier rubyid_related_links'>related_links</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+              <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='period'>.</span><span class='id identifier rubyid_related_links'>related_links</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_next_link'>next_link</span><span class='op'>|</span>
+                <span class='id identifier rubyid_url_list'>url_list</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_next_link'>next_link</span> <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='id identifier rubyid_next_link'>next_link</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+              <span class='kw'>end</span>
+            <span class='kw'>end</span>
+          <span class='kw'>end</span>
+        <span class='kw'>end</span>
+      <span class='kw'>end</span>
+    <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_err'>err</span>
+      <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='id identifier rubyid_err'>err</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_result'>result</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
   <h3 class="signature " id="parse-instance_method">
   
     #<strong>parse</strong>(url)  &#x21d2; <tt>Object</tt> 
@@ -758,9 +880,9 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Apr  1 12:49:58 2019 by
+  Generated on Tue Apr  2 09:05:23 2019 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.18 (ruby-2.6.2).
+  0.9.19 (ruby-2.6.2).
 </div>
 
     </div>
