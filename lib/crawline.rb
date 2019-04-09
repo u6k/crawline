@@ -303,31 +303,37 @@ module Crawline
     end
 
     def list_cache_state(url)
+      @logger.debug("Engine#list_cache_state: start: url=#{url}")
+
       url_list = [url]
-      result = {}
+      proccessed_url_list = []
 
       until url_list.empty? do
         target_url = url_list.shift
+        @logger.debug("Engine#list_cache_state: target_url=#{target_url}")
 
         begin
           data = get_latest_data_from_storage(target_url)
 
           if data.nil?
-            result[target_url] = "not found"
+            @logger.debug("Engine#list_cache_state: data not found: url=#{target_url}")
+            yield(target_url, nil, nil)
           else
             parser = find_parser(target_url)
-            parser_instance = parser.new(target_url, data)
-            if parser_instance.nil?
-              result[target_utl] = "parser not found"
+            if parser.nil?
+              @logger.debug("Engine#list_cache_state: parser not found: url=#{target_url}")
+              yield(target_url, data, nil)
             else
-              if not parser_instance.valid?
-                result[target_url] = "invalid"
-              else
-                result[target_url] = "found"
+              parser_instance = parser.new(target_url, data)
 
-                if not parser_instance.related_links.nil?
-                  parser_instance.related_links.each do |next_link|
-                    url_list << next_link if result[next_link].nil?
+              @logger.debug("Engine#list_cache_state: yield: url=#{target_url}")
+              yield(target_url, data, parser_instance)
+
+              if not parser_instance.related_links.nil?
+                parser_instance.related_links.each do |next_link|
+                  if not proccessed_url_list.include?(next_link)
+                    url_list << next_link
+                    proccessed_url_list << next_link
                   end
                 end
               end
@@ -337,8 +343,6 @@ module Crawline
           @logger.warn(err)
         end
       end
-
-      result
     end
 
     private
