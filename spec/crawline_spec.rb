@@ -1528,7 +1528,11 @@ describe Crawline::Engine do
 
       it "is all found" do
         @engine.crawl("https://blog.example.com/index.html")
-        result = @engine.list_cache_state("https://blog.example.com/index.html")
+
+        result = {}
+        @engine.list_cache_state("https://blog.example.com/index.html") do |url, cache, parser|
+          result[url] = (cache.nil? ? "not found" : "found")
+        end
 
         expect(result).to match(
           "https://blog.example.com/index.html" => "found",
@@ -1568,7 +1572,11 @@ describe Crawline::Engine do
 
       it "is 1 found, other not found" do
         @engine.crawl("https://blog.example.com/index.html")
-        result = @engine.list_cache_state("https://blog.example.com/index.html")
+
+        result = {}
+        @engine.list_cache_state("https://blog.example.com/index.html") do |url, cache, parser|
+          result[url] = (cache.nil? ? "not found" : "found")
+        end
 
         expect(result).to match(
           "https://blog.example.com/index.html" => "found",
