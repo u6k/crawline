@@ -169,6 +169,8 @@ describe "Crawline" do
   describe "ResourceRepository" do
     context "suffix is nil" do
       before do
+        WebMock.disable!
+
         access_key = ENV["AWS_S3_ACCESS_KEY"]
         secret_key = ENV["AWS_S3_SECRET_KEY"]
         region = ENV["AWS_S3_REGION"]
@@ -188,42 +190,39 @@ describe "Crawline" do
   
         # Setup ResourceRepository
         @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, nil)
-      end
-
-      after do
         @repo.remove_s3_objects
       end
-  
+
       it "put data" do
         @repo.put_s3_object("put_test.txt", "put test")
   
-        obj = @bucket.object("put_test.txt.latest")
-        actual_data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+        obj = @bucket.object("put_test.txt.latest.7z")
+        actual_data = @repo.decompress_data("put_test.txt", obj.get.body.read(obj.size))
 
         expect(actual_data).to eq("put test")
       end
 
       it "put struct data" do
         data = {
-          "title": "struct test data",
-          "headers": {
-            "aaa": "foo",
-            "bbb": "bar"
+          "title" => "struct test data",
+          "headers" => {
+            "aaa" => "foo",
+            "bbb" => "bar"
           },
-          "timestamp": Time.now
+          "timestamp" => Time.now.to_i
         }
 
-        @repo.put_s3_object("put_struct_data.bin", data)
+        @repo.put_s3_object("put_struct_data.bin", data.to_json)
 
-        obj = @bucket.object("put_struct_data.bin.latest")
-        actual_data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+        obj = @bucket.object("put_struct_data.bin.latest.7z")
+        actual_data = JSON.parse(@repo.decompress_data("put_struct_data.bin", obj.get.body.read(obj.size)))
 
         expect(actual_data).to eq data
       end
   
       it "get data" do
-        obj = @bucket.object("get_test.txt.latest")
-        obj.put(body: Zlib::Deflate.deflate(Marshal.dump("get test")))
+        obj = @bucket.object("get_test.txt.latest.7z")
+        obj.put(body: @repo.compress_data("get_test.txt", "get test"))
   
         data = @repo.get_s3_object("get_test.txt")
   
@@ -232,18 +231,18 @@ describe "Crawline" do
 
       it "get struct data" do
         data = {
-          "title": "STRUCT TEST DATA",
-          "headers": {
-            "AAA": "FOO",
-            "BBB": "BAR"
+          "title" => "STRUCT TEST DATA",
+          "headers" => {
+            "AAA" => "FOO",
+            "BBB" => "BAR"
           },
-          "timestamp": Time.now
+          "timestamp" => Time.now.to_i
         }
 
-        obj = @bucket.object("get_struct_data.bin.latest")
-        obj.put(body: Zlib::Deflate.deflate(Marshal.dump(data)))
+        obj = @bucket.object("get_struct_data.bin.latest.7z")
+        obj.put(body: @repo.compress_data("get_struct_data.bin", data.to_json))
 
-        actual_data = @repo.get_s3_object("get_struct_data.bin")
+        actual_data = JSON.parse(@repo.get_s3_object("get_struct_data.bin"))
 
         expect(actual_data).to eq data
       end
@@ -349,6 +348,8 @@ describe "Crawline" do
 
     context "set suffix" do
       before do
+        WebMock.disable!
+
         access_key = ENV["AWS_S3_ACCESS_KEY"]
         secret_key = ENV["AWS_S3_SECRET_KEY"]
         region = ENV["AWS_S3_REGION"]
@@ -369,20 +370,21 @@ describe "Crawline" do
   
         # Setup ResourceRepository
         @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, suffix)
+        @repo.remove_s3_objects
       end
   
       it "put data" do
         @repo.put_s3_object("put_test.txt", "put test")
   
-        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt.latest")
-        data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt.latest.7z")
+        data = @repo.decompress_data("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt", obj.get.body.read(obj.size))
 
         expect(data).to eq "put test"
       end
   
       it "get data" do
-        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt.latest")
-        obj.put(body: Zlib::Deflate.deflate(Marshal.dump("get test")))
+        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt.latest.7z")
+        obj.put(body: @repo.compress_data("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt", "get test"))
   
         data = @repo.get_s3_object("get_test.txt")
   

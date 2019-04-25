@@ -1,7 +1,8 @@
 require "crawline/version"
 
 require "aws-sdk-s3"
-require "zlib"
+require "zlib" # TODO: remove
+require "seven_zip_ruby"
 
 module Crawline
 
@@ -93,13 +94,15 @@ module Crawline
     def put_s3_object(file_name, data)
       @logger.debug("ResourceRepository#put_s3_object: start: file_name=#{file_name}, data.nil?=#{data.nil?}")
 
-      store_data = Zlib::Deflate.deflate(Marshal.dump(data))
+      # Compress data
+      store_data = compress_data(file_name, data)
 
-      obj_original = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + ".latest")
+      # Upload data to s3
+      obj_original = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + ".latest.7z")
       obj_original.put(body: store_data)
       @logger.debug("ResourceRepository#put_s3_object: put original object: data.size=#{store_data.size}")
 
-      obj_backup = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + "." + Time.now.to_i.to_s)
+      obj_backup = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + "." + Time.now.to_i.to_s + ".7z")
       obj_backup.put(body: store_data)
       @logger.debug("ResourceRepository#put_s3_object: put backup object: data.size=#{store_data.size}")
     end
@@ -107,12 +110,16 @@ module Crawline
     def list_s3_objects
       @logger.debug("ResourceRepository#list_s3_objects: start")
 
+      # Listing s3 object
       @bucket.objects.each do |obj|
         @logger.debug("ResourceRepository#list_s3_objects: object.key=#{obj.key}")
 
-        if obj.key.end_with?(".latest")
+        if obj.key.end_with?(".latest.7z")
+          # Download from s3
           stored_data = obj.get.body.read(obj.size)
-          data = Marshal.load(Zlib::Inflate.inflate(stored_data))
+
+          # Decompress data
+          data = decompress_data(obj.key, stored_data)
 
           yield(data)
         end
@@ -122,12 +129,15 @@ module Crawline
     def get_s3_object(file_name)
       @logger.debug("ResourceRepository#get_s3_object: file_name=#{file_name}")
 
-      object = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + ".latest")
+      # Download from s3
+      object = @bucket.object((@object_name_suffix.nil? ? "" : @object_name_suffix + "/") + file_name + ".latest.7z")
 
       begin
         @logger.debug("ResourceRepository#get_s3_object: getting")
         stored_data = object.get.body.read(object.size)
-        data = Marshal.load(Zlib::Inflate.inflate(stored_data))
+
+        # Decompress data
+        data = decompress_data(file_name, stored_data)
         @logger.debug("ResourceRepository#get_s3_object: getted")
       rescue Aws::S3::Errors::NoSuchKey
         @logger.debug("ResourceRepository#get_s3_object: no such key")
@@ -153,6 +163,40 @@ module Crawline
       @logger.debug("ResourceRepository#remove_s3_object: start: file_name=#{file_name}")
 
       @bucket.objects({prefix: file_name}).batch_delete!
+    end
+
+    def compress_data(file_name, data)
+      compressed_data = nil
+
+      StringIO.open("") do |io|
+        SevenZipRuby::Writer.open(io) do |szr|
+          szr.level = 9
+          szr.add_data(data, file_name.split("/")[-1])
+        end
+
+        io.rewind
+        raise "Compress error" if not SevenZipRuby::Reader.verify(io)
+
+        io.rewind
+        compressed_data = io.read
+      end
+
+      compressed_data
+    end
+
+    def decompress_data(file_name, compressed_data)
+      data = nil
+
+      StringIO.open(compressed_data) do |io|
+        raise "Decompress error" if not SevenZipRuby::Reader.verify(io)
+
+        io.rewind
+        SevenZipRuby::Reader.open(io) do |szr|
+          data = szr.extract_data(file_name.split("/")[-1])
+        end
+      end
+
+      data
     end
   end
 
