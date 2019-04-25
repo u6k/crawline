@@ -169,6 +169,8 @@ describe "Crawline" do
   describe "ResourceRepository" do
     context "suffix is nil" do
       before do
+        WebMock.disable!
+
         access_key = ENV["AWS_S3_ACCESS_KEY"]
         secret_key = ENV["AWS_S3_SECRET_KEY"]
         region = ENV["AWS_S3_REGION"]
@@ -188,42 +190,39 @@ describe "Crawline" do
   
         # Setup ResourceRepository
         @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, nil)
-      end
-
-      after do
         @repo.remove_s3_objects
       end
-  
+
       it "put data" do
         @repo.put_s3_object("put_test.txt", "put test")
   
-        obj = @bucket.object("put_test.txt.latest")
-        actual_data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+        obj = @bucket.object("put_test.txt.latest.7z")
+        actual_data = @repo.decompress_data("put_test.txt", obj.get.body.read(obj.size))
 
         expect(actual_data).to eq("put test")
       end
 
       it "put struct data" do
         data = {
-          "title": "struct test data",
-          "headers": {
-            "aaa": "foo",
-            "bbb": "bar"
+          "title" => "struct test data",
+          "headers" => {
+            "aaa" => "foo",
+            "bbb" => "bar"
           },
-          "timestamp": Time.now
+          "timestamp" => Time.now.to_i
         }
 
-        @repo.put_s3_object("put_struct_data.bin", data)
+        @repo.put_s3_object("put_struct_data.bin", data.to_json)
 
-        obj = @bucket.object("put_struct_data.bin.latest")
-        actual_data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+        obj = @bucket.object("put_struct_data.bin.latest.7z")
+        actual_data = JSON.parse(@repo.decompress_data("put_struct_data.bin", obj.get.body.read(obj.size)))
 
         expect(actual_data).to eq data
       end
   
       it "get data" do
-        obj = @bucket.object("get_test.txt.latest")
-        obj.put(body: Zlib::Deflate.deflate(Marshal.dump("get test")))
+        obj = @bucket.object("get_test.txt.latest.7z")
+        obj.put(body: @repo.compress_data("get_test.txt", "get test"))
   
         data = @repo.get_s3_object("get_test.txt")
   
@@ -232,18 +231,18 @@ describe "Crawline" do
 
       it "get struct data" do
         data = {
-          "title": "STRUCT TEST DATA",
-          "headers": {
-            "AAA": "FOO",
-            "BBB": "BAR"
+          "title" => "STRUCT TEST DATA",
+          "headers" => {
+            "AAA" => "FOO",
+            "BBB" => "BAR"
           },
-          "timestamp": Time.now
+          "timestamp" => Time.now.to_i
         }
 
-        obj = @bucket.object("get_struct_data.bin.latest")
-        obj.put(body: Zlib::Deflate.deflate(Marshal.dump(data)))
+        obj = @bucket.object("get_struct_data.bin.latest.7z")
+        obj.put(body: @repo.compress_data("get_struct_data.bin", data.to_json))
 
-        actual_data = @repo.get_s3_object("get_struct_data.bin")
+        actual_data = JSON.parse(@repo.get_s3_object("get_struct_data.bin"))
 
         expect(actual_data).to eq data
       end
@@ -349,6 +348,8 @@ describe "Crawline" do
 
     context "set suffix" do
       before do
+        WebMock.disable!
+
         access_key = ENV["AWS_S3_ACCESS_KEY"]
         secret_key = ENV["AWS_S3_SECRET_KEY"]
         region = ENV["AWS_S3_REGION"]
@@ -369,20 +370,21 @@ describe "Crawline" do
   
         # Setup ResourceRepository
         @repo = Crawline::ResourceRepository.new(access_key, secret_key, region, bucket, endpoint, force_path_style, suffix)
+        @repo.remove_s3_objects
       end
   
       it "put data" do
         @repo.put_s3_object("put_test.txt", "put test")
   
-        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt.latest")
-        data = Marshal.load(Zlib::Inflate.inflate(obj.get.body.read(obj.size)))
+        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt.latest.7z")
+        data = @repo.decompress_data("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/put_test.txt", obj.get.body.read(obj.size))
 
         expect(data).to eq "put test"
       end
   
       it "get data" do
-        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt.latest")
-        obj.put(body: Zlib::Deflate.deflate(Marshal.dump("get test")))
+        obj = @bucket.object("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt.latest.7z")
+        obj.put(body: @repo.compress_data("#{ENV["AWS_S3_OBJECT_NAME_SUFFIX"]}/get_test.txt", "get test"))
   
         data = @repo.get_s3_object("get_test.txt")
   
@@ -394,6 +396,8 @@ end
 
 describe Crawline::Engine do
   before do
+    WebMock.disable!
+
     # initialize test target object
     @downloader = Crawline::Downloader.new("crawline/#{Crawline::VERSION} (https://github.com/u6k/crawline)")
 
@@ -507,84 +511,170 @@ describe Crawline::Engine do
   end
 
   describe "#get_latest_data_from_storage" do
-    before do
-      # put test data
-      @data = {
-        "url" => "https://blog.example.com/pages/scp-173.html",
-        "request_method" => "GET",
-        "request_headers" => {
-          "accept" => "*/*",
-          "user-agent" => "crawline/0.0.0"
-        },
-        "response_headers" => {
-          "content-type" => "text/plain",
-          "content-length" => "123"
-        },
-        "response_body" => File.open("spec/data/pages/scp-173.html").read,
-        "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23)
-      }
+    context "text data" do
+      before do
+        # initialize Crawline::Engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
-      @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data", @data)
+        # put test data
+        @data = {
+          "url" => "https://blog.example.com/pages/scp-173.html",
+          "request_method" => "GET",
+          "request_headers" => {
+            "accept" => "*/*",
+            "user-agent" => "crawline/0.0.0"
+          },
+          "response_headers" => {
+            "content-type" => "text/plain",
+            "content-length" => "123"
+          },
+          "response_body" => File.open("spec/data/pages/scp-173.html").read,
+          "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23, 0)
+        }
 
-      # initialize Crawline::Engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+        @repo.put_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.json", @engine.data_to_json(@data))
+      end
+
+      it "exist data" do
+        stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+
+        expect(stored_data).to eq @data
+      end
+
+      it "not exist data" do
+        stored_data = @engine.get_latest_data_from_storage("scp-173.html")
+
+        expect(stored_data).to be nil
+      end
     end
 
-    it "exist data" do
-      stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+    context "binary data" do
+      before do
+        # initialize Crawline::Engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
 
-      expect(stored_data).to eq @data
-    end
+        # put test data
+        @data = {
+          "url" => "https://blog.example.com/download/data.zip",
+          "request_method" => "GET",
+          "request_headers" => {
+            "accept" => "*/*",
+            "user-agent" => "crawline/0.0.0"
+          },
+          "response_headers" => {
+            "content-type" => "application/zip",
+            "content-length" => "234"
+          },
+          "response_body" => File.open("spec/data/data.zip").read,
+          "downloaded_timestamp" => Time.utc(2019, 4, 25, 16, 28, 4, 0)
+        }
 
-    it "not exist data" do
-      stored_data = @engine.get_latest_data_from_storage("scp-173.html")
+        @repo.put_s3_object("c5/c53c88fa6e5f77c5ec6d72e04b8aeaf041bf5b582a13b4aef03de893fcfa92b6.json", @engine.data_to_json(@data))
+      end
 
-      expect(stored_data).to be nil
+      it "exist data" do
+        stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/download/data.zip")
+
+        expect(stored_data).to eq @data
+      end
+
+      it "not exist data" do
+        stored_data = @engine.get_latest_data_from_storage("data.zip")
+
+        expect(stored_data).to be nil
+      end
     end
   end
 
   describe "#put_data_to_storage" do
-    before do
-      # setup test data
-      @data = {
-        "url" => "https://blog.example.com/pages/scp-173.html",
-        "request_method" => "GET",
-        "request_headers" => {
-          "accept" => "*/*",
-          "user-agent" => "crawline/0.0.0"
-        },
-        "response_headers" => {
-          "content-type" => "text/plain",
-          "content-length" => "123"
-        },
-        "response_body" => File.open("spec/data/pages/scp-173.html").read,
-        "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23)
-      }
+    context "text data" do
+      before do
+        # setup test data
+        @data = {
+          "url" => "https://blog.example.com/pages/scp-173.html",
+          "request_method" => "GET",
+          "request_headers" => {
+            "accept" => "*/*",
+            "user-agent" => "crawline/0.0.0"
+          },
+          "response_headers" => {
+            "content-type" => "text/plain",
+            "content-length" => "123"
+          },
+          "response_body" => File.open("spec/data/pages/scp-173.html").read,
+          "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23, 0)
+        }
 
-      # setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+        # setup engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+      end
+
+      it "not exist before put" do
+        stored_data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.json")
+
+        expect(stored_data).to be nil
+      end
+
+      it "exist after put" do
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+
+        stored_data = @engine.json_to_data(@repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.json"))
+
+        expect(stored_data).to eq @data
+      end
+
+      it "is same data, put and get" do
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+
+        stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+
+        expect(stored_data).to eq @data
+      end
     end
 
-    it "not exist before put" do
-      stored_data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
+    context "binary data" do
+      before do
+        # setup test data
+        @data = {
+          "url" => "https://blog.example.com/download/data.zip",
+          "request_method" => "GET",
+          "request_headers" => {
+            "accept" => "*/*",
+            "user-agent" => "crawline/0.0.0"
+          },
+          "response_headers" => {
+            "content-type" => "application/zip",
+            "content-length" => "234"
+          },
+          "response_body" => File.open("spec/data/data.zip").read,
+          "downloaded_timestamp" => Time.utc(2019, 4, 25, 16, 35, 14, 0)
+        }
 
-      expect(stored_data).to be nil
-    end
+        # setup engine
+        @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
+      end
 
-    it "exist after put" do
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+      it "not exist before put" do
+        stored_data = @repo.get_s3_object("c5/c53c88fa6e5f77c5ec6d72e04b8aeaf041bf5b582a13b4aef03de893fcfa92b6.json")
 
-      stored_data = @repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.data")
+        expect(stored_data).to be nil
+      end
 
-      expect(stored_data).to eq @data
-    end
+      it "exist after put" do
+        @engine.put_data_to_storage("https://blog.example.com/download/data.zip", @data)
 
-    it "is same data, put and get" do
-      @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+        stored_data = @engine.json_to_data(@repo.get_s3_object("c5/c53c88fa6e5f77c5ec6d72e04b8aeaf041bf5b582a13b4aef03de893fcfa92b6.json"))
 
-      stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
+        expect(stored_data).to eq @data
+      end
 
-      expect(stored_data).to eq @data
+      it "is same data, put and get" do
+        @engine.put_data_to_storage("https://blog.example.com/download/data.zip", @data)
+
+        stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/download/data.zip")
+
+        expect(stored_data).to eq @data
+      end
     end
   end
 
