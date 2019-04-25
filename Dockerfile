@@ -8,6 +8,4 @@ RUN apt-get update && \
 VOLUME /var/myapp
 WORKDIR /var/myapp
 
-ENV CRAWLINE_LOGGER_LEVEL INFO
-
 CMD ["bash"]
