@@ -94,15 +94,7 @@ result = engine.parse("https://blog.example.com/index.html")
 
 ## Other
 
-最新の情報は、 [Wiki - crawline - u6k.Redmine](https://redmine.u6k.me/projects/crawline/wiki) を参照してください。 [Wiki - crawline - u6k.Redmine](https://redmine.u6k.me/projects/crawline/wiki) は常に編集しており、バージョン・アップのときにREADMEに反映します。
-
-- [要求、要件](https://redmine.u6k.me/projects/crawline/wiki/%E8%A6%81%E6%B1%82%E3%80%81%E8%A6%81%E4%BB%B6)
-- [ビルド手順](https://redmine.u6k.me/projects/crawline/wiki/%E3%83%93%E3%83%AB%E3%83%89%E6%89%8B%E9%A0%86)
-- [リリース手順](https://redmine.u6k.me/projects/crawline/wiki/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E6%89%8B%E9%A0%86)
-- [コンポーネント構造](https://redmine.u6k.me/projects/crawline/wiki/%E3%82%B3%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%8D%E3%83%B3%E3%83%88%E6%A7%8B%E9%80%A0)
-- [クローリングで配慮すべきこと](https://redmine.u6k.me/projects/crawline/wiki/%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E5%87%A6%E7%90%86%E3%83%95%E3%83%AD%E3%83%BC)
-- [スクレイピング処理フロー](https://redmine.u6k.me/projects/crawline/wiki/%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E5%87%A6%E7%90%86%E3%83%95%E3%83%AD%E3%83%BC)
-- [参考リンク](https://redmine.u6k.me/projects/crawline/wiki/%E5%8F%82%E8%80%83%E3%83%AA%E3%83%B3%E3%82%AF)
+最新の情報は、 [Wiki - crawline - u6k.Redmine](https://redmine.u6k.me/projects/crawline/wiki) を参照してください。
 
 ## API
 
