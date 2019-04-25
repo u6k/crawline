@@ -225,14 +225,14 @@ module Crawline
       @logger.debug("Engine#crawl: start: url=#{url}")
 
       url_list = [url]
-      result = { "success_url_list" => [], "fail_url_list" => [] }
+      result = { "success_url_list" => [], "fail_url_list" => [], "context" => {} }
 
       until url_list.empty? do
         target_url = url_list.shift
         @logger.debug("Engine#crawl: target_url=#{target_url}")
 
         begin
-          next_links = crawl_impl(target_url)
+          next_links = crawl_impl(target_url, result["context"])
 
           if not next_links.nil?
             next_links.each do |next_link|
@@ -350,7 +350,7 @@ module Crawline
         else
           @logger.debug("Engine#download_or_redownload: skip")
 
-          data
+          nil
         end
       end
     end
@@ -412,7 +412,7 @@ module Crawline
       path = path[0..1] + "/" + path
     end
 
-    def crawl_impl(url)
+    def crawl_impl(url, context)
       # find parser
       parser = find_parser(url)
 
@@ -422,12 +422,11 @@ module Crawline
       # download
       data = download_or_redownload(url, parser, latest_data)
 
+      return [] if data.nil?
+
       # validate
       parser_instance = parser.new(url, data)
-
-      if not parser_instance.valid?
-        raise ParseError.new("Downloaded data invalid.")
-      end
+      parser_instance.parse(context)
 
       # save
       put_data_to_storage(url, data)
