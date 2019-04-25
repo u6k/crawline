@@ -10,7 +10,6 @@ Gem::Specification.new do |spec|
   spec.email         = ["u6k.apps@gmail.com"]
 
   spec.summary       = %q{u6k crawler's framework.}
-  spec.description   = %q{u6k crawler's framework.}
   spec.homepage      = "https://github.com/u6k/crawline"
   spec.license       = "MIT"
 
@@ -39,4 +38,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'timecop', '~> 0.9.1'
 
   spec.add_dependency 'aws-sdk-s3', '~> 1.30', '>= 1.30.1'
+  spec.add_dependency 'seven_zip_ruby', '~> 1.2', '>= 1.2.5'
 end
