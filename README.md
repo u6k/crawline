@@ -1,6 +1,6 @@
 # Crawline _(crawline)_
 
-[![Travis](https://img.shields.io/travis/u6k/crawline.svg)](https://travis-ci.org/u6k/crawline) [![license](https://img.shields.io/github/license/u6k/crawline.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/release/u6k/crawline.svg)](https://github.com/u6k/crawline/releases) [![Website](https://img.shields.io/website-up-down-green-red/https/redmine.u6k.me%2Fprojects%2Fcrawline.svg?label=u6k.Redmine)](https://redmine.u6k.me/projects/crawline) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![Build Status](https://travis-ci.org/u6k/crawline.svg?branch=master)](https://travis-ci.org/u6k/crawline) [![license](https://img.shields.io/github/license/u6k/crawline.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/release/u6k/crawline.svg)](https://github.com/u6k/crawline/releases) [![Website](https://img.shields.io/website/https/redmine.u6k.me/projects/crawline.svg?label=u6k.Redmine)](https://redmine.u6k.me/projects/crawline) [![Website](https://img.shields.io/website/https/u6k.github.io/crawline.svg?label=API%20%20document)](https://u6k.github.io/crawline/) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 > クローラー向けのクラス・ライブラリ
 
