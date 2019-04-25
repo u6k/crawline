@@ -1,7 +1,6 @@
 require "crawline/version"
 
 require "aws-sdk-s3"
-require "zlib" # TODO: remove
 require "seven_zip_ruby"
 
 module Crawline
@@ -138,7 +137,7 @@ module Crawline
 
         # Decompress data
         data = decompress_data(file_name, stored_data)
-        @logger.debug("ResourceRepository#get_s3_object: getted")
+        @logger.debug("ResourceRepository#get_s3_object: getted: size=#{data.size}")
       rescue Aws::S3::Errors::NoSuchKey
         @logger.debug("ResourceRepository#get_s3_object: no such key")
         data = nil
@@ -192,7 +191,7 @@ module Crawline
 
         io.rewind
         SevenZipRuby::Reader.open(io) do |szr|
-          data = szr.extract_data(file_name.split("/")[-1])
+          data = szr.extract_data(szr.entries[0])
         end
       end
 
@@ -302,14 +301,31 @@ module Crawline
       parser[1]
     end
 
+    def data_to_json(data)
+      json_data = Marshal.load(Marshal.dump(data))
+      json_data["response_body"] = Base64.urlsafe_encode64(json_data["response_body"])
+      json_data["downloaded_timestamp"] = json_data["downloaded_timestamp"].to_i
+
+      json_data.to_json
+    end
+
+    def json_to_data(json_data)
+      data = JSON.parse(json_data)
+      data["response_body"] = Base64.urlsafe_decode64(data["response_body"])
+      data["response_body"].force_encoding("US-ASCII")
+      data["downloaded_timestamp"] = Time.at(data["downloaded_timestamp"], 0).getutc
+
+      data
+    end
+
     def get_latest_data_from_storage(url)
       @logger.debug("Engine#get_latest_data_from_storage: start: url=#{url}")
 
       s3_path = convert_url_to_s3_path(url)
-      data = @repo.get_s3_object(s3_path + ".data")
+      data = @repo.get_s3_object(s3_path + ".json")
 
       if not data.nil?
-        data
+        json_to_data(data)
       else
         nil
       end
@@ -343,7 +359,7 @@ module Crawline
       @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
 
       s3_path = convert_url_to_s3_path(url)
-      @repo.put_s3_object(s3_path + ".data", data)
+      @repo.put_s3_object(s3_path + ".json", data_to_json(data))
     end
 
     def list_cache_state(url)
