@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - [#7029: バリデーションを削除する](https://redmine.u6k.me/issues/7029)
+- [#6982: パース処理の進捗を表示する](https://redmine.u6k.me/issues/6982)
 
 ## [0.16.0] - 2019-04-25
 
