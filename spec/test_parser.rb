@@ -15,11 +15,6 @@ class BlogListTestParser < Crawline::BaseParser
     true
   end
 
-  def valid?
-    # Valid if related_links is not empty
-    (not @related_links.empty?)
-  end
-
   def related_links
     # Related links in blog page list
     @related_links
@@ -59,13 +54,6 @@ class BlogPageTestParser < Crawline::BaseParser
   def redownload?
     # Download when updated.year is after 2018
     (@updated.year >= 2018)
-  end
-
-  def valid?
-    # Valid if title and item_number and updated are not empty
-    ((not @title.empty?) &&
-      (not @item_number.empty?) &&
-      (not @updated.nil?))
   end
 
   def related_links
