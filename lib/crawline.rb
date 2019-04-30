@@ -424,7 +424,7 @@ module Crawline
 
       return [] if data.nil?
 
-      # validate
+      # parse
       parser_instance = parser.new(url, data)
       parser_instance.parse(context)
 
@@ -469,10 +469,6 @@ module Crawline
 
   class BaseParser
     def redownload?
-      raise "Not implemented."
-    end
-
-    def valid?
       raise "Not implemented."
     end
 
