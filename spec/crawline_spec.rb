@@ -1624,12 +1624,25 @@ describe Crawline::Engine do
           "response_headers" => {},
           "response_body" => File.new("spec/data/index.html").read,
           "downloaded_timestamp" => Time.now.utc})
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", {
+          "url" => "https://blog.example.com/pages/scp-173.html",
+          "request_method" => "GET",
+          "request_headers" => {},
+          "response_headers" => {},
+          "response_body" => File.new("spec/data/pages/scp-173.html").read,
+          "downloaded_timestamp" => Time.now.utc})
       end
 
       it "parse all pages" do
         data = @engine.parse("https://blog.example.com/index.html")
 
-        expect(data).to be_empty
+        expect(data).to match(
+          "scp-173" => {
+            "title" => "SCP-173 - 彫刻 - オリジナル",
+            "item_number" => "SCP-173",
+            "object_class" => "Euclid",
+            "updated" => Time.parse("2019-01-06 18:14")
+          })
       end
     end
   end

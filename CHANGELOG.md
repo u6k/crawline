@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2019-05-01
+
+### Removed
+
+- [#7029: バリデーションを削除する](https://redmine.u6k.me/issues/7029)
+- [#6982: パース処理の進捗を表示する](https://redmine.u6k.me/issues/6982)
+
 ## [0.16.0] - 2019-04-25
 
 ### Changed

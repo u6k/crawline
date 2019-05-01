@@ -238,9 +238,9 @@ module Crawline
             next_links.each do |next_link|
               url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
             end
-
-            result["success_url_list"].push(target_url)
           end
+
+          result["success_url_list"].push(target_url)
         rescue => err
           @logger.warn("Engine#crawl: crawl error")
           @logger.warn(err)
@@ -261,25 +261,27 @@ module Crawline
       result = { "success_url_list" => [], "fail_url_list" => [], "context" => {} }
 
       until url_list.empty? do
-        @logger.debug("Engine#parse: until url_list.empty?")
-
         target_url = url_list.shift
         @logger.debug("Engine#parse: target_url=#{target_url}")
 
         begin
           next_links = parse_impl(target_url, result["context"])
 
-          next_links.each do |next_link|
-            url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
+          if not next_links.nil?
+            next_links.each do |next_link|
+              url_list << next_link if (not url_list.include?(next_link)) && (not result["success_url_list"].include?(next_link)) && (not result["fail_url_list"].include?(next_link))
+            end
           end
 
           result["success_url_list"].push(target_url)
-        rescue CrawlineError => err
+        rescue => err
           @logger.warn("Engine#parse: parse error")
           @logger.warn(err)
 
           result["fail_url_list"].push(target_url)
         end
+
+        @logger.info("Engine#parse: progress: total=#{url_list.size + result["success_url_list"].size + result["fail_url_list"].size}, success=#{result["success_url_list"].size}, fail=#{result["fail_url_list"].size}, remaining=#{url_list.size}")
       end
 
       result["context"]
@@ -424,7 +426,7 @@ module Crawline
 
       return [] if data.nil?
 
-      # validate
+      # parse
       parser_instance = parser.new(url, data)
       parser_instance.parse(context)
 
@@ -433,12 +435,6 @@ module Crawline
 
       # return next links
       related_links = parser_instance.related_links
-
-      if not related_links.nil?
-        related_links
-      else
-        []
-      end
     end
 
     def parse_impl(url, context)
@@ -458,21 +454,11 @@ module Crawline
 
       # return next links
       related_links = parser_instance.related_links
-
-      if not related_links.nil?
-        related_links
-      else
-        []
-      end
     end
   end
 
   class BaseParser
     def redownload?
-      raise "Not implemented."
-    end
-
-    def valid?
       raise "Not implemented."
     end
 
