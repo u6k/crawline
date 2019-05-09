@@ -27,7 +27,11 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'nokogiri', '~> 1.6', '>= 1.6.8'
   spec.add_development_dependency 'yard', '~> 0.9.18'
   spec.add_development_dependency 'timecop', '~> 0.9.1'
+  spec.add_development_dependency 'pg'
 
   spec.add_dependency 'aws-sdk-s3', '~> 1.30', '>= 1.30.1'
   spec.add_dependency 'seven_zip_ruby', '~> 1.2', '>= 1.2.5'
+  spec.add_dependency 'activerecord'
+  spec.add_dependency 'standalone_migrations'
+  spec.add_dependency 'activerecord-import', '~> 1.0', '>= 1.0.1'
 end
