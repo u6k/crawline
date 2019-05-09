@@ -11,12 +11,18 @@ services:
       - "AWS_S3_ENDPOINT=http://s3:9000"
       - "AWS_S3_FORCE_PATH_STYLE=true"
       - "AWS_S3_OBJECT_NAME_SUFFIX=test"
-      - "CRAWLINE_LOGGER_LEVEL=WARN"
+      - "DB_DATABASE=db"
+      - "DB_USERNAME=db_user"
+      - "DB_PASSWORD=db_pass"
+      - "DB_HOST=db"
+      - "DB_PORT=5432"
+      - "CRAWLINE_LOGGER_LEVEL=FATAL"
     volumes:
       - ".:/var/myapp"
     depends_on:
       - "s3"
-    command: /bin/sh -c "bundle install && rake spec"
+      - "db"
+    command: /bin/sh -c "bundle install && rake db:migrate && rake spec"
   s3:
     image: minio/minio
     environment:
@@ -26,7 +32,17 @@ services:
     volumes:
       - "s3:/export"
     command: server /export
+  db:
+    image: postgres:11
+    environment:
+      - "POSTGRES_USER=db_user"
+      - "POSTGRES_PASSWORD=db_pass"
+      - "POSTGRES_DB=db"
+    volumes:
+      - "db:/var/lib/postgresql/data"
 
 volumes:
   s3:
+    driver: local
+  db:
     driver: local

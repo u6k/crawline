@@ -2,6 +2,8 @@ require "crawline/version"
 
 require "aws-sdk-s3"
 require "seven_zip_ruby"
+require "active_record"
+require "activerecord-import"
 
 module Crawline
 
@@ -357,11 +359,40 @@ module Crawline
       end
     end
 
-    def put_data_to_storage(url, data)
+    def put_data_to_storage(url, data, related_links)
       @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
 
       s3_path = convert_url_to_s3_path(url)
       @repo.put_s3_object(s3_path + ".json", data_to_json(data))
+
+      # save database
+      cache_data = Model::CrawlineCache.new(url: data["url"], request_method: data["request_method"], downloaded_timestamp: data["downloaded_timestamp"], storage_path: s3_path)
+
+      headers_data = data["request_headers"].map do |k, v|
+        Model::CrawlineHeader.new(crawline_cache: cache_data, message_type: "request", header_name: k, header_value: v)
+      end
+
+      headers_data += data["response_headers"].map do |k, v|
+        Model::CrawlineHeader.new(crawline_cache: cache_data, message_type: "response", header_name: k, header_value: v)
+      end
+
+      if not related_links.nil?
+        urls = related_links
+      else
+        urls = []
+      end
+
+      related_links_data = urls.map do |url|
+        Model::CrawlineRelatedLink.new(crawline_cache: cache_data, url: url)
+      end
+
+      ActiveRecord::Base.transaction do
+        cache_data.save!
+
+        Model::CrawlineHeader.import(headers_data)
+
+        Model::CrawlineRelatedLink.import(related_links_data)
+      end
     end
 
     def list_cache_state(url)
@@ -407,12 +438,12 @@ module Crawline
       end
     end
 
-    private
-
     def convert_url_to_s3_path(url)
       path = OpenSSL::Digest::SHA256.hexdigest(url)
       path = path[0..1] + "/" + path
     end
+
+    private
 
     def crawl_impl(url, context)
       # find parser
@@ -430,8 +461,8 @@ module Crawline
       parser_instance = parser.new(url, data)
       parser_instance.parse(context)
 
-      # save
-      put_data_to_storage(url, data)
+      # save storage
+      put_data_to_storage(url, data, parser_instance.related_links)
 
       # return next links
       related_links = parser_instance.related_links
@@ -499,6 +530,33 @@ module Crawline
   end
 
   class ParseError < CrawlineError
+  end
+
+  module Model
+    class CrawlineCache < ActiveRecord::Base
+      has_many :crawline_headers, dependent: :destroy
+      has_many :crawline_related_links, dependent: :destroy
+
+      validates :url, presence: true
+      validates :request_method, presence: true
+      validates :downloaded_timestamp, presence: true
+      validates :storage_path, presence: true
+    end
+
+    class CrawlineHeader < ActiveRecord::Base
+      belongs_to :crawline_cache
+
+      validates :crawline_cache, presence: true
+      validates :message_type, presence: true
+      validates :header_name, presence: true
+    end
+
+    class CrawlineRelatedLink < ActiveRecord::Base
+      belongs_to :crawline_cache
+
+      validates :crawline_cache, presence: true
+      validates :url, presence: true
+    end
   end
 
 end
