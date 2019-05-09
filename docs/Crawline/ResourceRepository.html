@@ -348,8 +348,6 @@
       <pre class="lines">
 
 
-69
-70
 71
 72
 73
@@ -370,10 +368,12 @@
 88
 89
 90
-91</pre>
+91
+92
+93</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 69</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 71</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_access_key'>access_key</span><span class='comma'>,</span> <span class='id identifier rubyid_secret_key'>secret_key</span><span class='comma'>,</span> <span class='id identifier rubyid_region'>region</span><span class='comma'>,</span> <span class='id identifier rubyid_bucket'>bucket</span><span class='comma'>,</span> <span class='id identifier rubyid_endpoint'>endpoint</span><span class='comma'>,</span> <span class='id identifier rubyid_force_path_style'>force_path_style</span><span class='comma'>,</span> <span class='id identifier rubyid_object_name_suffix'>object_name_suffix</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="CrawlineLogger.html" title="Crawline::CrawlineLogger (class)">CrawlineLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_get_logger'><span class='object_link'><a href="CrawlineLogger.html#get_logger-class_method" title="Crawline::CrawlineLogger.get_logger (method)">get_logger</a></span></span>
@@ -425,8 +425,6 @@
       <pre class="lines">
 
 
-167
-168
 169
 170
 171
@@ -442,10 +440,12 @@
 181
 182
 183
-184</pre>
+184
+185
+186</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 167</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 169</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_compress_data'>compress_data</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_compressed_data'>compressed_data</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -485,8 +485,6 @@
       <pre class="lines">
 
 
-186
-187
 188
 189
 190
@@ -498,10 +496,12 @@
 196
 197
 198
-199</pre>
+199
+200
+201</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 186</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 188</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_decompress_data'>decompress_data</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='comma'>,</span> <span class='id identifier rubyid_compressed_data'>compressed_data</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -559,14 +559,14 @@
       <pre class="lines">
 
 
-149
-150
 151
 152
-153</pre>
+153
+154
+155</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 149</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 151</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_exists_s3_object?'>exists_s3_object?</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ResourceRepository#exists_s3_object?: file_name=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -593,8 +593,6 @@
       <pre class="lines">
 
 
-128
-129
 130
 131
 132
@@ -612,10 +610,12 @@
 144
 145
 146
-147</pre>
+147
+148
+149</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 128</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 130</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_s3_object'>get_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ResourceRepository#get_s3_object: file_name=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -657,8 +657,6 @@
       <pre class="lines">
 
 
-109
-110
 111
 112
 113
@@ -674,10 +672,12 @@
 123
 124
 125
-126</pre>
+126
+127
+128</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 109</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 111</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_list_s3_objects'>list_s3_objects</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ResourceRepository#list_s3_objects: start</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -717,8 +717,6 @@
       <pre class="lines">
 
 
-93
-94
 95
 96
 97
@@ -731,10 +729,12 @@
 104
 105
 106
-107</pre>
+107
+108
+109</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 93</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 95</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_put_s3_object'>put_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ResourceRepository#put_s3_object: start: file_name=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_content'>, data.nil?=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -771,14 +771,14 @@
       <pre class="lines">
 
 
-161
-162
 163
 164
-165</pre>
+165
+166
+167</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 161</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 163</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_remove_s3_object'>remove_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_file_name'>file_name</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ResourceRepository#remove_s3_object: start: file_name=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -805,14 +805,14 @@
       <pre class="lines">
 
 
-155
-156
 157
 158
-159</pre>
+159
+160
+161</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 155</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 157</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_remove_s3_objects'>remove_s3_objects</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ResourceRepository#remove_s3_objects</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -829,7 +829,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed May  1 05:07:57 2019 by
+  Generated on Thu May  9 08:37:45 2019 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.19 (ruby-2.6.3).
 </div>

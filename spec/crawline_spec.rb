@@ -418,6 +418,8 @@ describe Crawline::Engine do
 
     # remove all test data
     @repo.remove_s3_objects
+
+    Crawline::Model::CrawlineCache.destroy_all
   end
 
   describe "#initialize" do
@@ -605,6 +607,21 @@ describe Crawline::Engine do
           "downloaded_timestamp" => Time.utc(2019, 3, 22, 10, 9, 23, 0)
         }
 
+        @data_index = {
+          "url" => "https://blog.example.com/index.html",
+          "request_method" => "GET",
+          "request_headers" => {
+            "accept" => "*/*",
+            "user-agent" => "crawline/0.0.0"
+          },
+          "response_headers" => {
+            "content-type" => "text/plain",
+            "content-length" => "123"
+          },
+          "response_body" => File.open("spec/data/index.html").read,
+          "downloaded_timestamp" => Time.utc(2019, 5, 9, 14, 49, 13)
+        }
+
         # setup engine
         @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
       end
@@ -616,15 +633,64 @@ describe Crawline::Engine do
       end
 
       it "exist after put" do
-        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+        url = "https://blog.example.com/pages/scp-173.html"
+
+        parser = BlogPageTestParser.new(url, @data)
+
+        @engine.put_data_to_storage(url, @data, parser.related_links)
 
         stored_data = @engine.json_to_data(@repo.get_s3_object("ce/ceb2236cdd616baab540663231c830b6ef2cee1ed3a98f68fa4b14e81462f7fc.json"))
 
         expect(stored_data).to eq @data
+
+        expect(Crawline::Model::CrawlineCache.all).to match_array([
+          have_attributes(url: "https://blog.example.com/pages/scp-173.html", request_method: "GET", downloaded_timestamp: Time.utc(2019, 3, 22, 10, 9, 23))
+        ])
+
+        expect(Crawline::Model::CrawlineHeader.all).to match_array([
+          have_attributes(message_type: "request",  header_name: "accept",         header_value: "*/*"),
+          have_attributes(message_type: "request",  header_name: "user-agent",     header_value: "crawline/0.0.0"),
+          have_attributes(message_type: "response", header_name: "content-type",   header_value: "text/plain"),
+          have_attributes(message_type: "response", header_name: "content-length", header_value: "123"),
+        ])
+
+        expect(Crawline::Model::CrawlineRelatedLink.all).to be_empty
+      end
+
+      it "exist after put" do
+        url = "https://blog.example.com/index.html"
+
+        parser = BlogListTestParser.new(url, @data_index)
+
+        @engine.put_data_to_storage(url, @data_index, parser.related_links)
+
+        stored_data = @engine.json_to_data(@repo.get_s3_object("8b/8b2b65d6eed92b6408276cd807a8dceb716abc09fd0cbbc50f8446207b250a1f.json"))
+
+        expect(stored_data).to eq @data_index
+
+        expect(Crawline::Model::CrawlineCache.all).to match_array([
+          have_attributes(url: "https://blog.example.com/index.html", request_method: "GET", downloaded_timestamp: Time.utc(2019, 5, 9, 14, 49, 13))
+        ])
+
+        expect(Crawline::Model::CrawlineHeader.all).to match_array([
+          have_attributes(message_type: "request",  header_name: "accept",         header_value: "*/*"),
+          have_attributes(message_type: "request",  header_name: "user-agent",     header_value: "crawline/0.0.0"),
+          have_attributes(message_type: "response", header_name: "content-type",   header_value: "text/plain"),
+          have_attributes(message_type: "response", header_name: "content-length", header_value: "123"),
+        ])
+
+        expect(Crawline::Model::CrawlineRelatedLink.all).to match_array([
+          have_attributes(url: "https://blog.example.com/pages/scp-173.html"),
+          have_attributes(url: "https://blog.example.com/pages/scp-087.html"),
+          have_attributes(url: "https://blog.example.com/pages/scp-055.html"),
+          have_attributes(url: "https://blog.example.com/pages/scp-682.html"),
+          have_attributes(url: "https://blog.example.com/pages/scp-093.html"),
+          have_attributes(url: "https://blog.example.com/page2.html"),
+        ])
       end
 
       it "is same data, put and get" do
-        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data)
+        @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", @data, [])
 
         stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/pages/scp-173.html")
 
@@ -661,7 +727,7 @@ describe Crawline::Engine do
       end
 
       it "exist after put" do
-        @engine.put_data_to_storage("https://blog.example.com/download/data.zip", @data)
+        @engine.put_data_to_storage("https://blog.example.com/download/data.zip", @data, [])
 
         stored_data = @engine.json_to_data(@repo.get_s3_object("c5/c53c88fa6e5f77c5ec6d72e04b8aeaf041bf5b582a13b4aef03de893fcfa92b6.json"))
 
@@ -669,7 +735,7 @@ describe Crawline::Engine do
       end
 
       it "is same data, put and get" do
-        @engine.put_data_to_storage("https://blog.example.com/download/data.zip", @data)
+        @engine.put_data_to_storage("https://blog.example.com/download/data.zip", @data, [])
 
         stored_data = @engine.get_latest_data_from_storage("https://blog.example.com/download/data.zip")
 
@@ -1045,119 +1111,119 @@ describe Crawline::Engine do
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/index.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/page2.html", {
           "url" => "https://blog.example.com/page2.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/page2.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/page3.html", {
           "url" => "https://blog.example.com/page3.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/page3.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-049.html", {
           "url" => "https://blog.example.com/pages/scp-049.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-049.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-055.html", {
           "url" => "https://blog.example.com/pages/scp-055.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-055.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-087.html", {
           "url" => "https://blog.example.com/pages/scp-087.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-087.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-093.html", {
           "url" => "https://blog.example.com/pages/scp-093.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-093.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-096.html", {
           "url" => "https://blog.example.com/pages/scp-096.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-096.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-106.html", {
           "url" => "https://blog.example.com/pages/scp-106.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-106.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", {
           "url" => "https://blog.example.com/pages/scp-173.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-173.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-231.html", {
           "url" => "https://blog.example.com/pages/scp-231.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-231.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-426.html", {
           "url" => "https://blog.example.com/pages/scp-426.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-426.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-682.html", {
           "url" => "https://blog.example.com/pages/scp-682.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-682.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-914.html", {
           "url" => "https://blog.example.com/pages/scp-914.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-914.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-2000.html", {
           "url" => "https://blog.example.com/pages/scp-2000.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-2000.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-2317.html", {
           "url" => "https://blog.example.com/pages/scp-2317.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-2317.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-2602.html", {
           "url" => "https://blog.example.com/pages/scp-2602.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-2602.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
       end
 
       after do
@@ -1395,119 +1461,119 @@ describe Crawline::Engine do
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/index.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/page2.html", {
           "url" => "https://blog.example.com/page2.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/page2.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/page3.html", {
           "url" => "https://blog.example.com/page3.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/page3.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-049.html", {
           "url" => "https://blog.example.com/pages/scp-049.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-049.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-055.html", {
           "url" => "https://blog.example.com/pages/scp-055.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-055.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-087.html", {
           "url" => "https://blog.example.com/pages/scp-087.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-087.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-093.html", {
           "url" => "https://blog.example.com/pages/scp-093.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-093.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-096.html", {
           "url" => "https://blog.example.com/pages/scp-096.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-096.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-106.html", {
           "url" => "https://blog.example.com/pages/scp-106.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-106.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", {
           "url" => "https://blog.example.com/pages/scp-173.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-173.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-231.html", {
           "url" => "https://blog.example.com/pages/scp-231.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-231.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-426.html", {
           "url" => "https://blog.example.com/pages/scp-426.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-426.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-682.html", {
           "url" => "https://blog.example.com/pages/scp-682.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-682.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-914.html", {
           "url" => "https://blog.example.com/pages/scp-914.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-914.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-2000.html", {
           "url" => "https://blog.example.com/pages/scp-2000.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-2000.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-2317.html", {
           "url" => "https://blog.example.com/pages/scp-2317.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-2317.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-2602.html", {
           "url" => "https://blog.example.com/pages/scp-2602.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-2602.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
       end
   
       it "parse all pages" do
@@ -1623,14 +1689,14 @@ describe Crawline::Engine do
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/index.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
         @engine.put_data_to_storage("https://blog.example.com/pages/scp-173.html", {
           "url" => "https://blog.example.com/pages/scp-173.html",
           "request_method" => "GET",
           "request_headers" => {},
           "response_headers" => {},
           "response_body" => File.new("spec/data/pages/scp-173.html").read,
-          "downloaded_timestamp" => Time.now.utc})
+          "downloaded_timestamp" => Time.now.utc}, [])
       end
 
       it "parse all pages" do
@@ -1726,122 +1792,6 @@ describe Crawline::Engine do
       end
 
       expect(time).to be_within(0.5).of(17.5)
-    end
-  end
-
-  describe "#check_cache_exists" do
-    before do
-      # Setup engine
-      @engine = Crawline::Engine.new(@downloader, @repo, @parsers, 0.001)
-  
-    end
-
-    context "complete cache" do
-      before do
-        # Setup webmock
-        WebMock.enable!
-
-        WebMock.stub_request(:get, "https://blog.example.com/index.html").
-          to_return(body: File.new("spec/data/index.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/page2.html").
-          to_return(body: File.new("spec/data/page2.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/page3.html").
-          to_return(body: File.new("spec/data/page3.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-049.html").
-          to_return(body: File.new("spec/data/pages/scp-049.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-055.html").
-          to_return(body: File.new("spec/data/pages/scp-055.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-087.html").
-          to_return(body: File.new("spec/data/pages/scp-087.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-093.html").
-          to_return(body: File.new("spec/data/pages/scp-093.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-096.html").
-          to_return(body: File.new("spec/data/pages/scp-096.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-106.html").
-          to_return(body: File.new("spec/data/pages/scp-106.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-173.html").
-          to_return(body: File.new("spec/data/pages/scp-173.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-231.html").
-          to_return(body: File.new("spec/data/pages/scp-231.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-426.html").
-          to_return(body: File.new("spec/data/pages/scp-426.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-682.html").
-          to_return(body: File.new("spec/data/pages/scp-682.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-914.html").
-          to_return(body: File.new("spec/data/pages/scp-914.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2000.html").
-          to_return(body: File.new("spec/data/pages/scp-2000.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2317.html").
-          to_return(body: File.new("spec/data/pages/scp-2317.html"), status: 200)
-        WebMock.stub_request(:get, "https://blog.example.com/pages/scp-2602.html").
-          to_return(body: File.new("spec/data/pages/scp-2602.html"), status: 200)
-      end
-
-      after do
-        WebMock.disable!
-      end
-
-      it "is all found" do
-        @engine.crawl("https://blog.example.com/index.html")
-
-        result = {}
-        @engine.list_cache_state("https://blog.example.com/index.html") do |url, cache, parser|
-          result[url] = (cache.nil? ? "not found" : "found")
-        end
-
-        expect(result).to match(
-          "https://blog.example.com/index.html" => "found",
-          "https://blog.example.com/page2.html" => "found",
-          "https://blog.example.com/page3.html" => "found",
-          "https://blog.example.com/pages/scp-049.html" => "found",
-          "https://blog.example.com/pages/scp-055.html" => "found",
-          "https://blog.example.com/pages/scp-087.html" => "found",
-          "https://blog.example.com/pages/scp-093.html" => "found",
-          "https://blog.example.com/pages/scp-096.html" => "found",
-          "https://blog.example.com/pages/scp-106.html" => "found",
-          "https://blog.example.com/pages/scp-173.html" => "found",
-          "https://blog.example.com/pages/scp-231.html" => "found",
-          "https://blog.example.com/pages/scp-426.html" => "found",
-          "https://blog.example.com/pages/scp-682.html" => "found",
-          "https://blog.example.com/pages/scp-914.html" => "found",
-          "https://blog.example.com/pages/scp-2000.html" => "found",
-          "https://blog.example.com/pages/scp-2317.html" => "found",
-          "https://blog.example.com/pages/scp-2602.html" => "found")
-      end
-    end
-
-    context "incomplete cache" do
-      before do
-        # Setup webmock
-        WebMock.enable!
-
-        WebMock.stub_request(:get, /^https:\/\/blog\.example\.com\/.*$/).
-          to_return(status: 404)
-        WebMock.stub_request(:get, "https://blog.example.com/index.html").
-          to_return(body: File.new("spec/data/index.html"), status: 200)
-      end
-
-      after do
-        WebMock.disable!
-      end
-
-      it "is 1 found, other not found" do
-        @engine.crawl("https://blog.example.com/index.html")
-
-        result = {}
-        @engine.list_cache_state("https://blog.example.com/index.html") do |url, cache, parser|
-          result[url] = (cache.nil? ? "not found" : "found")
-        end
-
-        expect(result).to match(
-          "https://blog.example.com/index.html" => "found",
-          "https://blog.example.com/page2.html" => "not found",
-          "https://blog.example.com/pages/scp-055.html" => "not found",
-          "https://blog.example.com/pages/scp-087.html" => "not found",
-          "https://blog.example.com/pages/scp-093.html" => "not found",
-          "https://blog.example.com/pages/scp-173.html" => "not found",
-          "https://blog.example.com/pages/scp-682.html" => "not found")
-      end
     end
   end
 end

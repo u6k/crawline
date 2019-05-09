@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2019-05-09
+
+### Added
+
+- [#7048: キャッシュ、関連リンクなどをストレージ取得しなくてもDB検索できるようにする](https://redmine.u6k.me/issues/7048)
+    - `list_cache_state`を削除しました
+    - crawlineが持つDBマイグレーションを適用する必要があります
+
 ## [0.17.0] - 2019-05-01
 
 ### Removed

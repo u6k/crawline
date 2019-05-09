@@ -2,6 +2,8 @@ require "crawline/version"
 
 require "aws-sdk-s3"
 require "seven_zip_ruby"
+require "active_record"
+require "activerecord-import"
 
 module Crawline
 
@@ -357,62 +359,48 @@ module Crawline
       end
     end
 
-    def put_data_to_storage(url, data)
+    def put_data_to_storage(url, data, related_links)
       @logger.debug("Engine#put_data_to_storage: start: url=#{url}, data=#{data.size if not data.nil?}")
 
       s3_path = convert_url_to_s3_path(url)
       @repo.put_s3_object(s3_path + ".json", data_to_json(data))
-    end
 
-    def list_cache_state(url)
-      @logger.debug("Engine#list_cache_state: start: url=#{url}")
+      # save database
+      cache_data = Model::CrawlineCache.new(url: data["url"], request_method: data["request_method"], downloaded_timestamp: data["downloaded_timestamp"], storage_path: s3_path)
 
-      url_list = [url]
-      proccessed_url_list = []
+      headers_data = data["request_headers"].map do |k, v|
+        Model::CrawlineHeader.new(crawline_cache: cache_data, message_type: "request", header_name: k, header_value: v)
+      end
 
-      until url_list.empty? do
-        target_url = url_list.shift
-        @logger.debug("Engine#list_cache_state: target_url=#{target_url}")
+      headers_data += data["response_headers"].map do |k, v|
+        Model::CrawlineHeader.new(crawline_cache: cache_data, message_type: "response", header_name: k, header_value: v)
+      end
 
-        begin
-          data = get_latest_data_from_storage(target_url)
+      if not related_links.nil?
+        urls = related_links
+      else
+        urls = []
+      end
 
-          if data.nil?
-            @logger.debug("Engine#list_cache_state: data not found: url=#{target_url}")
-            yield(target_url, nil, nil)
-          else
-            parser = find_parser(target_url)
-            if parser.nil?
-              @logger.debug("Engine#list_cache_state: parser not found: url=#{target_url}")
-              yield(target_url, data, nil)
-            else
-              parser_instance = parser.new(target_url, data)
+      related_links_data = urls.map do |url|
+        Model::CrawlineRelatedLink.new(crawline_cache: cache_data, url: url)
+      end
 
-              @logger.debug("Engine#list_cache_state: yield: url=#{target_url}")
-              yield(target_url, data, parser_instance)
+      ActiveRecord::Base.transaction do
+        cache_data.save!
 
-              if not parser_instance.related_links.nil?
-                parser_instance.related_links.each do |next_link|
-                  if not proccessed_url_list.include?(next_link)
-                    url_list << next_link
-                    proccessed_url_list << next_link
-                  end
-                end
-              end
-            end
-          end
-        rescue => err
-          @logger.warn(err)
-        end
+        Model::CrawlineHeader.import(headers_data)
+
+        Model::CrawlineRelatedLink.import(related_links_data)
       end
     end
-
-    private
 
     def convert_url_to_s3_path(url)
       path = OpenSSL::Digest::SHA256.hexdigest(url)
       path = path[0..1] + "/" + path
     end
+
+    private
 
     def crawl_impl(url, context)
       # find parser
@@ -430,8 +418,8 @@ module Crawline
       parser_instance = parser.new(url, data)
       parser_instance.parse(context)
 
-      # save
-      put_data_to_storage(url, data)
+      # save storage
+      put_data_to_storage(url, data, parser_instance.related_links)
 
       # return next links
       related_links = parser_instance.related_links
@@ -499,6 +487,33 @@ module Crawline
   end
 
   class ParseError < CrawlineError
+  end
+
+  module Model
+    class CrawlineCache < ActiveRecord::Base
+      has_many :crawline_headers, dependent: :destroy
+      has_many :crawline_related_links, dependent: :destroy
+
+      validates :url, presence: true
+      validates :request_method, presence: true
+      validates :downloaded_timestamp, presence: true
+      validates :storage_path, presence: true
+    end
+
+    class CrawlineHeader < ActiveRecord::Base
+      belongs_to :crawline_cache
+
+      validates :crawline_cache, presence: true
+      validates :message_type, presence: true
+      validates :header_name, presence: true
+    end
+
+    class CrawlineRelatedLink < ActiveRecord::Base
+      belongs_to :crawline_cache
+
+      validates :crawline_cache, presence: true
+      validates :url, presence: true
+    end
   end
 
 end
