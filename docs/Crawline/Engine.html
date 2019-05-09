@@ -117,6 +117,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#convert_url_to_s3_path-instance_method" title="#convert_url_to_s3_path (instance method)">#<strong>convert_url_to_s3_path</strong>(url)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#crawl-instance_method" title="#crawl (instance method)">#<strong>crawl</strong>(url)  &#x21d2; Object </a>
     
 
@@ -275,28 +297,6 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#list_cache_state-instance_method" title="#list_cache_state (instance method)">#<strong>list_cache_state</strong>(url)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
       <a href="#parse-instance_method" title="#parse (instance method)">#<strong>parse</strong>(url)  &#x21d2; Object </a>
     
 
@@ -319,7 +319,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#put_data_to_storage-instance_method" title="#put_data_to_storage (instance method)">#<strong>put_data_to_storage</strong>(url, data)  &#x21d2; Object </a>
+      <a href="#put_data_to_storage-instance_method" title="#put_data_to_storage (instance method)">#<strong>put_data_to_storage</strong>(url, data, related_links)  &#x21d2; Object </a>
     
 
     
@@ -383,8 +383,6 @@
       <pre class="lines">
 
 
-203
-204
 205
 206
 207
@@ -402,10 +400,12 @@
 219
 220
 221
-222</pre>
+222
+223
+224</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 203</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 205</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_downloader'>downloader</span><span class='comma'>,</span> <span class='id identifier rubyid_repo'>repo</span><span class='comma'>,</span> <span class='id identifier rubyid_parsers'>parsers</span><span class='comma'>,</span> <span class='id identifier rubyid_interval'>interval</span> <span class='op'>=</span> <span class='float'>1.0</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="CrawlineLogger.html" title="Crawline::CrawlineLogger (class)">CrawlineLogger</a></span></span><span class='period'>.</span><span class='id identifier rubyid_get_logger'><span class='object_link'><a href="CrawlineLogger.html#get_logger-class_method" title="Crawline::CrawlineLogger.get_logger (method)">get_logger</a></span></span>
@@ -440,7 +440,39 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="crawl-instance_method">
+  <h3 class="signature first" id="convert_url_to_s3_path-instance_method">
+  
+    #<strong>convert_url_to_s3_path</strong>(url)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+398
+399
+400
+401</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 398</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_convert_url_to_s3_path'>convert_url_to_s3_path</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='const'>OpenSSL</span><span class='op'>::</span><span class='const'>Digest</span><span class='op'>::</span><span class='const'>SHA256</span><span class='period'>.</span><span class='id identifier rubyid_hexdigest'>hexdigest</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_path'>path</span><span class='lbracket'>[</span><span class='int'>0</span><span class='op'>..</span><span class='int'>1</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='tstring_end'>&quot;</span></span> <span class='op'>+</span> <span class='id identifier rubyid_path'>path</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="crawl-instance_method">
   
     #<strong>crawl</strong>(url)  &#x21d2; <tt>Object</tt> 
   
@@ -454,8 +486,6 @@
       <pre class="lines">
 
 
-224
-225
 226
 227
 228
@@ -485,10 +515,12 @@
 252
 253
 254
-255</pre>
+255
+256
+257</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 224</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 226</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_crawl'>crawl</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#crawl: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -542,16 +574,16 @@
       <pre class="lines">
 
 
-306
-307
 308
 309
 310
 311
-312</pre>
+312
+313
+314</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 306</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 308</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_data_to_json'>data_to_json</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_json_data'>json_data</span> <span class='op'>=</span> <span class='const'>Marshal</span><span class='period'>.</span><span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='const'>Marshal</span><span class='period'>.</span><span class='id identifier rubyid_dump'>dump</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span><span class='rparen'>)</span>
@@ -580,8 +612,6 @@
       <pre class="lines">
 
 
-336
-337
 338
 339
 340
@@ -602,10 +632,12 @@
 355
 356
 357
-358</pre>
+358
+359
+360</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 336</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 338</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_download_or_redownload'>download_or_redownload</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='id identifier rubyid_parser'>parser</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#download_or_redownload: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>, parser=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_parser'>parser</span><span class='embexpr_end'>}</span><span class='tstring_content'>, data.nil?=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -650,8 +682,6 @@
       <pre class="lines">
 
 
-290
-291
 292
 293
 294
@@ -664,10 +694,12 @@
 301
 302
 303
-304</pre>
+304
+305
+306</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 290</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 292</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_find_parser'>find_parser</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#find_parser: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -704,8 +736,6 @@
       <pre class="lines">
 
 
-323
-324
 325
 326
 327
@@ -715,10 +745,12 @@
 331
 332
 333
-334</pre>
+334
+335
+336</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 323</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 325</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_latest_data_from_storage'>get_latest_data_from_storage</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#get_latest_data_from_storage: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -752,17 +784,17 @@
       <pre class="lines">
 
 
-314
-315
 316
 317
 318
 319
 320
-321</pre>
+321
+322
+323</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 314</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 316</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_json_to_data'>json_to_data</span><span class='lparen'>(</span><span class='id identifier rubyid_json_data'>json_data</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_json_data'>json_data</span><span class='rparen'>)</span>
@@ -771,114 +803,6 @@
   <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>downloaded_timestamp</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_at'>at</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>downloaded_timestamp</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_getutc'>getutc</span>
 
   <span class='id identifier rubyid_data'>data</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="list_cache_state-instance_method">
-  
-    #<strong>list_cache_state</strong>(url)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-367
-368
-369
-370
-371
-372
-373
-374
-375
-376
-377
-378
-379
-380
-381
-382
-383
-384
-385
-386
-387
-388
-389
-390
-391
-392
-393
-394
-395
-396
-397
-398
-399
-400
-401
-402
-403
-404
-405
-406
-407
-408</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 367</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_list_cache_state'>list_cache_state</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
-  <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#list_cache_state: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_url_list'>url_list</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_url'>url</span><span class='rbracket'>]</span>
-  <span class='id identifier rubyid_proccessed_url_list'>proccessed_url_list</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
-
-  <span class='kw'>until</span> <span class='id identifier rubyid_url_list'>url_list</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='kw'>do</span>
-    <span class='id identifier rubyid_target_url'>target_url</span> <span class='op'>=</span> <span class='id identifier rubyid_url_list'>url_list</span><span class='period'>.</span><span class='id identifier rubyid_shift'>shift</span>
-    <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#list_cache_state: target_url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_url'>target_url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-
-    <span class='kw'>begin</span>
-      <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='id identifier rubyid_get_latest_data_from_storage'>get_latest_data_from_storage</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rparen'>)</span>
-
-      <span class='kw'>if</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-        <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#list_cache_state: data not found: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_url'>target_url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-        <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-      <span class='kw'>else</span>
-        <span class='id identifier rubyid_parser'>parser</span> <span class='op'>=</span> <span class='id identifier rubyid_find_parser'>find_parser</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='rparen'>)</span>
-        <span class='kw'>if</span> <span class='id identifier rubyid_parser'>parser</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-          <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#list_cache_state: parser not found: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_url'>target_url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-          <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-        <span class='kw'>else</span>
-          <span class='id identifier rubyid_parser_instance'>parser_instance</span> <span class='op'>=</span> <span class='id identifier rubyid_parser'>parser</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
-
-          <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#list_cache_state: yield: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_url'>target_url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-          <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_target_url'>target_url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='rparen'>)</span>
-
-          <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='period'>.</span><span class='id identifier rubyid_related_links'>related_links</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
-            <span class='id identifier rubyid_parser_instance'>parser_instance</span><span class='period'>.</span><span class='id identifier rubyid_related_links'>related_links</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_next_link'>next_link</span><span class='op'>|</span>
-              <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_proccessed_url_list'>proccessed_url_list</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_next_link'>next_link</span><span class='rparen'>)</span>
-                <span class='id identifier rubyid_url_list'>url_list</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_next_link'>next_link</span>
-                <span class='id identifier rubyid_proccessed_url_list'>proccessed_url_list</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_next_link'>next_link</span>
-              <span class='kw'>end</span>
-            <span class='kw'>end</span>
-          <span class='kw'>end</span>
-        <span class='kw'>end</span>
-      <span class='kw'>end</span>
-    <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_err'>err</span>
-      <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='id identifier rubyid_err'>err</span><span class='rparen'>)</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -900,8 +824,6 @@
       <pre class="lines">
 
 
-257
-258
 259
 260
 261
@@ -931,10 +853,12 @@
 285
 286
 287
-288</pre>
+288
+289
+290</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 257</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 259</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#parse: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -976,7 +900,7 @@
       <div class="method_details ">
   <h3 class="signature " id="put_data_to_storage-instance_method">
   
-    #<strong>put_data_to_storage</strong>(url, data)  &#x21d2; <tt>Object</tt> 
+    #<strong>put_data_to_storage</strong>(url, data, related_links)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -988,21 +912,79 @@
       <pre class="lines">
 
 
-360
-361
 362
 363
 364
-365</pre>
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 360</span>
+      <pre class="code"><span class="info file"># File 'lib/crawline.rb', line 362</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_put_data_to_storage'>put_data_to_storage</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_put_data_to_storage'>put_data_to_storage</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='comma'>,</span> <span class='id identifier rubyid_related_links'>related_links</span><span class='rparen'>)</span>
   <span class='ivar'>@logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Engine#put_data_to_storage: start: url=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_url'>url</span><span class='embexpr_end'>}</span><span class='tstring_content'>, data=</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_data'>data</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>=</span> <span class='id identifier rubyid_convert_url_to_s3_path'>convert_url_to_s3_path</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
   <span class='ivar'>@repo</span><span class='period'>.</span><span class='id identifier rubyid_put_s3_object'>put_s3_object</span><span class='lparen'>(</span><span class='id identifier rubyid_s3_path'>s3_path</span> <span class='op'>+</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.json</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_data_to_json'>data_to_json</span><span class='lparen'>(</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span><span class='rparen'>)</span>
+
+  <span class='comment'># save database
+</span>  <span class='id identifier rubyid_cache_data'>cache_data</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Model.html" title="Crawline::Model (module)">Model</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Model/CrawlineCache.html" title="Crawline::Model::CrawlineCache (class)">CrawlineCache</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>url:</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>url</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>request_method:</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>request_method</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>downloaded_timestamp:</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>downloaded_timestamp</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>storage_path:</span> <span class='id identifier rubyid_s3_path'>s3_path</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_headers_data'>headers_data</span> <span class='op'>=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>request_headers</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
+    <span class='const'><span class='object_link'><a href="Model.html" title="Crawline::Model (module)">Model</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Model/CrawlineHeader.html" title="Crawline::Model::CrawlineHeader (class)">CrawlineHeader</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>crawline_cache:</span> <span class='id identifier rubyid_cache_data'>cache_data</span><span class='comma'>,</span> <span class='label'>message_type:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>request</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>header_name:</span> <span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='label'>header_value:</span> <span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_headers_data'>headers_data</span> <span class='op'>+=</span> <span class='id identifier rubyid_data'>data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>response_headers</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid_v'>v</span><span class='op'>|</span>
+    <span class='const'><span class='object_link'><a href="Model.html" title="Crawline::Model (module)">Model</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Model/CrawlineHeader.html" title="Crawline::Model::CrawlineHeader (class)">CrawlineHeader</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>crawline_cache:</span> <span class='id identifier rubyid_cache_data'>cache_data</span><span class='comma'>,</span> <span class='label'>message_type:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>response</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>header_name:</span> <span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='label'>header_value:</span> <span class='id identifier rubyid_v'>v</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>if</span> <span class='kw'>not</span> <span class='id identifier rubyid_related_links'>related_links</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+    <span class='id identifier rubyid_urls'>urls</span> <span class='op'>=</span> <span class='id identifier rubyid_related_links'>related_links</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_urls'>urls</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_related_links_data'>related_links_data</span> <span class='op'>=</span> <span class='id identifier rubyid_urls'>urls</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_url'>url</span><span class='op'>|</span>
+    <span class='const'><span class='object_link'><a href="Model.html" title="Crawline::Model (module)">Model</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Model/CrawlineRelatedLink.html" title="Crawline::Model::CrawlineRelatedLink (class)">CrawlineRelatedLink</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>crawline_cache:</span> <span class='id identifier rubyid_cache_data'>cache_data</span><span class='comma'>,</span> <span class='label'>url:</span> <span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='const'>ActiveRecord</span><span class='op'>::</span><span class='const'>Base</span><span class='period'>.</span><span class='id identifier rubyid_transaction'>transaction</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_cache_data'>cache_data</span><span class='period'>.</span><span class='id identifier rubyid_save!'>save!</span>
+
+    <span class='const'><span class='object_link'><a href="Model.html" title="Crawline::Model (module)">Model</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Model/CrawlineHeader.html" title="Crawline::Model::CrawlineHeader (class)">CrawlineHeader</a></span></span><span class='period'>.</span><span class='id identifier rubyid_import'>import</span><span class='lparen'>(</span><span class='id identifier rubyid_headers_data'>headers_data</span><span class='rparen'>)</span>
+
+    <span class='const'><span class='object_link'><a href="Model.html" title="Crawline::Model (module)">Model</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Model/CrawlineRelatedLink.html" title="Crawline::Model::CrawlineRelatedLink (class)">CrawlineRelatedLink</a></span></span><span class='period'>.</span><span class='id identifier rubyid_import'>import</span><span class='lparen'>(</span><span class='id identifier rubyid_related_links_data'>related_links_data</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1014,7 +996,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed May  1 05:07:57 2019 by
+  Generated on Thu May  9 08:37:46 2019 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.19 (ruby-2.6.3).
 </div>
