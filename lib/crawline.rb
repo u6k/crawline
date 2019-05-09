@@ -395,49 +395,6 @@ module Crawline
       end
     end
 
-    def list_cache_state(url)
-      @logger.debug("Engine#list_cache_state: start: url=#{url}")
-
-      url_list = [url]
-      proccessed_url_list = []
-
-      until url_list.empty? do
-        target_url = url_list.shift
-        @logger.debug("Engine#list_cache_state: target_url=#{target_url}")
-
-        begin
-          data = get_latest_data_from_storage(target_url)
-
-          if data.nil?
-            @logger.debug("Engine#list_cache_state: data not found: url=#{target_url}")
-            yield(target_url, nil, nil)
-          else
-            parser = find_parser(target_url)
-            if parser.nil?
-              @logger.debug("Engine#list_cache_state: parser not found: url=#{target_url}")
-              yield(target_url, data, nil)
-            else
-              parser_instance = parser.new(target_url, data)
-
-              @logger.debug("Engine#list_cache_state: yield: url=#{target_url}")
-              yield(target_url, data, parser_instance)
-
-              if not parser_instance.related_links.nil?
-                parser_instance.related_links.each do |next_link|
-                  if not proccessed_url_list.include?(next_link)
-                    url_list << next_link
-                    proccessed_url_list << next_link
-                  end
-                end
-              end
-            end
-          end
-        rescue => err
-          @logger.warn(err)
-        end
-      end
-    end
-
     def convert_url_to_s3_path(url)
       path = OpenSSL::Digest::SHA256.hexdigest(url)
       path = path[0..1] + "/" + path
