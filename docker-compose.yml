@@ -22,7 +22,7 @@ services:
     depends_on:
       - "s3"
       - "db"
-    command: /bin/sh -c "bundle install && rake spec"
+    command: /bin/sh -c "bundle install && rake db:migrate && rake spec"
   s3:
     image: minio/minio
     environment:
