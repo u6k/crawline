@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/u6k/crawline.svg?branch=master)](https://travis-ci.org/u6k/crawline) [![license](https://img.shields.io/github/license/u6k/crawline.svg)](LICENSE) [![GitHub release](https://img.shields.io/github/release/u6k/crawline.svg)](https://github.com/u6k/crawline/releases) [![Website](https://img.shields.io/website/https/redmine.u6k.me/projects/crawline.svg?label=u6k.Redmine)](https://redmine.u6k.me/projects/crawline) [![Website](https://img.shields.io/website/https/u6k.github.io/crawline.svg?label=API%20%20document)](https://u6k.github.io/crawline/) [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
+> __NOTE:__ 本プロジェクトはアーカイブしました。Scrapyを使うことにしたため、本プロジェクトを使わなくなったためです。
+
 > クローラー向けのクラス・ライブラリ
 
 クローラー向けにクローリング・エンジン、キャッシュ管理、パーサーのベース・クラスを提供します。パーサーを実装してクローリング・エンジンに登録することで、簡単にクローリングを行うことができます。
